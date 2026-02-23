@@ -2703,7 +2703,7 @@ extension MenuBarItemManager {
         // were recreated (app restart). When items are merely repositioned
         // (user drag-and-drop), the IDs stay the same and we must not undo
         // the user's arrangement.
-        let currentWindowIDSet = Set(items.map(\.windowID))
+        let currentWindowIDSet = Set(items.lazy.map(\.windowID))
         let previousWindowIDSet = Set(previousWindowIDs)
         guard currentWindowIDSet != previousWindowIDSet else { return false }
 
