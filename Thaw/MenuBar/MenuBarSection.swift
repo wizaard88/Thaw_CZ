@@ -333,17 +333,17 @@ final class MenuBarSection {
                 try? await Task.sleep(for: .seconds(interval))
                 guard !Task.isCancelled, let self, let appState else { return }
                 // Don't rehide while the mouse is inside the menu bar or IceBar.
-                if await self.isMouseInsideActiveArea() {
-                    await self.startRehideChecks()
+                if self.isMouseInsideActiveArea() {
+                    self.startRehideChecks()
                     return
                 }
                 // Check if any menu bar item has a menu open before hiding.
                 if await appState.itemManager.isAnyMenuBarItemMenuOpen() {
                     // Restart the task to check again later.
-                    await self.startRehideChecks()
+                    self.startRehideChecks()
                     return
                 }
-                await self.hide()
+                self.hide()
             }
         case .timed:
             rehideMonitor = EventMonitor.universal(for: .mouseMoved) { [weak self, weak appState] event in
@@ -373,8 +373,8 @@ final class MenuBarSection {
                             try? await Task.sleep(for: .seconds(interval))
                             guard !Task.isCancelled, let self, let appState else { return }
                             // Don't rehide while the mouse is inside the menu bar or IceBar.
-                            if await self.isMouseInsideActiveArea() {
-                                await self.startRehideChecks()
+                            if self.isMouseInsideActiveArea() {
+                                self.startRehideChecks()
                                 return
                             }
                             // Check if any menu bar item has a menu open before hiding.
@@ -383,7 +383,7 @@ final class MenuBarSection {
                                 await self.restartTimedRehideTimer()
                                 return
                             }
-                            await self.hide()
+                            self.hide()
                         }
                     }
                 } else {
@@ -416,8 +416,8 @@ final class MenuBarSection {
             try? await Task.sleep(for: .seconds(interval))
             guard !Task.isCancelled, let self, let appState else { return }
             // Don't rehide while the mouse is inside the menu bar or IceBar.
-            if await self.isMouseInsideActiveArea() {
-                await self.startRehideChecks()
+            if self.isMouseInsideActiveArea() {
+                self.startRehideChecks()
                 return
             }
             // Check if any menu bar item has a menu open before hiding.
@@ -426,7 +426,7 @@ final class MenuBarSection {
                 await self.restartTimedRehideTimer()
                 return
             }
-            await self.hide()
+            self.hide()
         }
     }
 
