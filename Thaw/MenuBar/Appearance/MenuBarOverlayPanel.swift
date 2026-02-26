@@ -515,6 +515,11 @@ final class MenuBarOverlayPanel: NSPanel {
         }
     }
 
+    override func close() {
+        missionControlProbeWindow.close()
+        super.close()
+    }
+
     override func isAccessibilityElement() -> Bool {
         return false
     }

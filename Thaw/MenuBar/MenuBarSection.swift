@@ -330,7 +330,7 @@ final class MenuBarSection {
             rehideTimer = .scheduledTimer(
                 withTimeInterval: appState.settings.general.rehideInterval,
                 repeats: false
-            ) { [weak self] _ in
+            ) { [weak self, weak appState] _ in
                 Task {
                     // Don't rehide while the mouse is inside the menu bar or IceBar.
                     if await self?.isMouseInsideActiveArea() == true {
@@ -338,7 +338,7 @@ final class MenuBarSection {
                         return
                     }
                     // Check if any menu bar item has a menu open before hiding.
-                    if await appState.itemManager.isAnyMenuBarItemMenuOpen() {
+                    if await appState?.itemManager.isAnyMenuBarItemMenuOpen() == true {
                         // Restart the timer to check again later.
                         await self?.startRehideChecks()
                         return
@@ -347,7 +347,7 @@ final class MenuBarSection {
                 }
             }
         case .timed:
-            rehideMonitor = EventMonitor.universal(for: .mouseMoved) { [weak self] event in
+            rehideMonitor = EventMonitor.universal(for: .mouseMoved) { [weak self, weak appState] event in
                 // Throttle: process at most ~20fps regardless of mouse polling rate.
                 enum Context {
                     static var lastTime: TimeInterval = 0
@@ -358,6 +358,7 @@ final class MenuBarSection {
 
                 guard
                     let self,
+                    let appState,
                     let screen = NSScreen.main
                 else {
                     return event
@@ -371,7 +372,7 @@ final class MenuBarSection {
                         rehideTimer = .scheduledTimer(
                             withTimeInterval: appState.settings.general.rehideInterval,
                             repeats: false
-                        ) { [weak self] _ in
+                        ) { [weak self, weak appState] _ in
                             guard let self else { return }
                             Task {
                                 // Don't rehide while the mouse is inside the menu bar or IceBar.
@@ -380,7 +381,7 @@ final class MenuBarSection {
                                     return
                                 }
                                 // Check if any menu bar item has a menu open before hiding.
-                                if await appState.itemManager.isAnyMenuBarItemMenuOpen() {
+                                if await appState?.itemManager.isAnyMenuBarItemMenuOpen() == true {
                                     self.diagLog.debug("Open menu detected - restarting timed rehide timer")
                                     await self.restartTimedRehideTimer()
                                     return
@@ -417,7 +418,7 @@ final class MenuBarSection {
         rehideTimer = .scheduledTimer(
             withTimeInterval: appState.settings.general.rehideInterval,
             repeats: false
-        ) { [weak self] _ in
+        ) { [weak self, weak appState] _ in
             guard let self else { return }
             Task {
                 // Don't rehide while the mouse is inside the menu bar or IceBar.
@@ -426,7 +427,7 @@ final class MenuBarSection {
                     return
                 }
                 // Check if any menu bar item has a menu open before hiding.
-                if await appState.itemManager.isAnyMenuBarItemMenuOpen() {
+                if await appState?.itemManager.isAnyMenuBarItemMenuOpen() == true {
                     self.diagLog.debug("Open menu still detected - restarting timed rehide timer again")
                     await self.restartTimedRehideTimer()
                     return
