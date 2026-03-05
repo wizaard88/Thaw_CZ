@@ -1951,7 +1951,7 @@ extension MenuBarItemManager {
                     item: item,
                     destination: destination,
                     on: resolvedDisplayID,
-                    warpCursorAfter: false  // move() owns the single warp in its defer
+                    warpCursorAfter: false // move() owns the single warp in its defer
                 )
                 // Verify the item actually reached the correct position.
                 if try await itemHasCorrectPosition(item: item, for: destination, on: resolvedDisplayID) {
