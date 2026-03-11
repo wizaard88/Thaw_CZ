@@ -764,6 +764,10 @@ extension HIDEventManager {
 
     /// Shows a tooltip for the menu bar item under the cursor, if enabled.
     private func handleMenuBarTooltip(appState: AppState, screen: NSScreen) {
+        guard ScreenCapture.cachedCheckPermissions() else {
+            return
+        }
+
         guard appState.settings.advanced.showMenuBarTooltips else {
             return
         }

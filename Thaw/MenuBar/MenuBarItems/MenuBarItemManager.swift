@@ -106,7 +106,7 @@ final class MenuBarItemManager: ObservableObject {
     @Published private(set) var areControlItemsMissing = false
 
     /// Diagnostic logger for the menu bar item manager.
-    fileprivate nonisolated static let diagLog = DiagLog(category: "MenuBarItemManager")
+    fileprivate static nonisolated let diagLog = DiagLog(category: "MenuBarItemManager")
 
     /// Semaphore to prevent overlapping event operations.
     private let eventSemaphore = SimpleSemaphore(value: 1)
@@ -3847,7 +3847,7 @@ private extension Duration {
     /// Returns the duration in milliseconds as a Double.
     var milliseconds: Double {
         let (seconds, attoseconds) = components
-        return Double(seconds) * 1000 + Double(attoseconds) / 1000000000000000
+        return Double(seconds) * 1000 + Double(attoseconds) / 1_000_000_000_000_000
     }
 }
 

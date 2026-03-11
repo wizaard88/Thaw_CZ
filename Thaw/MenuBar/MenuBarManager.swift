@@ -314,7 +314,7 @@ final class MenuBarManager: ObservableObject {
                             self.hideApplicationMenus()
                         }
                     }
-                } else if isHidingApplicationMenus && !isManuallyHidingApplicationMenus {
+                } else if isHidingApplicationMenus, !isManuallyHidingApplicationMenus {
                     showApplicationMenus()
                 }
             }
