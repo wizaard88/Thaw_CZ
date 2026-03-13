@@ -16777,6 +16777,12 @@
             "value" : "L’autorisation d'enregistrement de l'écran est nécessaire pour afficher les infobulles."
           }
         },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ツールチップを表示するには、画面収録の権限が必要です。"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16787,12 +16793,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Для отображения подсказок требуется разрешение на запись экрана."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ツールチップを表示するには、画面収録の権限が必要です。"
           }
         },
         "zh-Hant" : {
@@ -16819,6 +16819,12 @@
             "value" : "L'autorisation d'enregistrement de l'écran est nécessaire pour rechercher des éléments de la barre des menus."
           }
         },
+        "ja" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "メニューバーの項目を検索するには、画面収録の権限が必要です。"
+          }
+        },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16829,12 +16835,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Для поиска элементов строки меню требуется разрешение на запись экрана."
-          }
-        },
-        "ja" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "メニューバーの項目を検索するには、画面収録の権限が必要です。"
           }
         },
         "zh-Hant" : {
