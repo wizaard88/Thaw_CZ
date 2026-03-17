@@ -791,6 +791,12 @@
             "value" : "%1$@ в данный момент запущен. Одновременная работа нескольких менеджеров строки меню может вызвать проблемы с отображением и непредвиденное поведение. Рекомендуется закрыть %2$@ перед использованием Thaw."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ กำลังทำงาน การเรียกใช้โปรแกรมจัดการแถบเมนูหลายตัวในเวลาเดียวกันอาจทำให้เกิดปัญหาด้านการแสดงผลและพฤติกรรมที่ไม่คาดคิด ลองปิด %@ ก่อนใช้ Thaw"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -1589,6 +1595,12 @@
             "value" : "%lld кадр/с"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld fps"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2087,6 +2099,12 @@
             "value" : "+"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "+"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2177,6 +2195,12 @@
             "value" : "⌘"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⌘"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -2262,6 +2286,12 @@
           }
         },
         "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "⎋"
+          }
+        },
+        "th" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "⎋"
@@ -3273,6 +3303,12 @@
             "value" : "Всегда показывать скрытые элементы"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงรายการที่ซ่อนไว้เสมอ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3363,6 +3399,12 @@
             "value" : "Всегда показывать скрытые элементы строки меню на этом дисплее."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงรายการแถบเมนูที่ซ่อนไว้เสมอในแถบเมนูบนหน้าจอนี้"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -3451,6 +3493,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Всегда показывать панель %@ у указателя мыши при вызове горячей клавишей."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงแถบ %@ ไว้ที่ตำแหน่งของตัวชี้เมาส์เสมอเมื่อแสดงโดยใช้ปุ่มลัด"
           }
         },
         "tr" : {
@@ -5174,6 +5222,12 @@
             "value" : "Невозможно переместить значок %@."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ไม่สามารถย้ายไอคอน %@ ได้"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -5774,6 +5828,12 @@
             "value" : "Проверить разрешения"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ตรวจสอบสิทธิ์"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6167,6 +6227,12 @@
             "value" : "Шеврон (вниз)"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "หัวลูกศร (ลง)"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6461,6 +6527,12 @@
             "value" : "Нажмите на пустую область строки меню, чтобы показать скрытые элементы."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คลิกบริเวณว่างของแถบเมนูเพื่อแสดงรายการแถบเมนูที่ซ่อนไว้"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6653,6 +6725,12 @@
             "value" : "Подтвердить"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ยืนยัน"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6741,6 +6819,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Обнаружен конфликтующий менеджер строки меню"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "พบโปรแกรมจัดการแถบเมนูที่ขัดแย้ง"
           }
         },
         "zh-Hans" : {
@@ -6927,6 +7011,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Продолжить всё равно"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ดำเนินการต่อไป"
           }
         },
         "zh-Hans" : {
@@ -7829,6 +7919,12 @@
             "value" : "Отменить"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ยกเลิก"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8121,6 +8217,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Дисплеи"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "หน้าจอแสดงผล"
           }
         },
         "tr" : {
@@ -8621,6 +8723,12 @@
             "value" : "Дважды нажмите на пустую область строки меню, чтобы показать всегда скрытые элементы."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ดับเบิลคลิกบริเวณว่างของแถบเมนูเพื่อแสดงรายการแถบเมนูที่ซ่อนอยู่เสมอ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -8709,6 +8817,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Двойной клик для всегда скрытых"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ดับเบิลคลิกเพื่อซ่อนไว้เสมอ"
           }
         },
         "tr" : {
@@ -9107,6 +9221,12 @@
             "value" : "E"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "E"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -9297,6 +9417,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Изменить имя"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แก้ไขชื่อ"
           }
         },
         "tr" : {
@@ -11531,6 +11657,12 @@
             "value" : "Частота обновления анимированных значков строки меню в панелях. Более высокие значения обеспечивают плавность, но потребляют больше ресурсов процессора."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ความถี่ในการรีเฟรชไอคอนแถบเมนูที่เคลื่อนไหวในแผง ค่าที่สูงกว่าจะราบเรียบขึ้นแต่ใช้ CPU มากขึ้น"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -11823,6 +11955,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Частота обновления значков"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "อัตราการรีเฟรชไอคอน"
           }
         },
         "tr" : {
@@ -12828,6 +12966,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Левый отступ"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ขอบด้านซ้าย"
           }
         },
         "tr" : {
@@ -15366,6 +15510,12 @@
             "value" : "Недоступно, потому что панель %@ включена для этого дисплея."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ไม่พร้อมใช้งานเนื่องจากแถบ %@ เปิดใช้งานสำหรับหน้าจอนี้"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -15556,6 +15706,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Вырез"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "บาก"
           }
         },
         "tr" : {
@@ -16566,6 +16722,12 @@
             "value" : "Завершить Thaw"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ปิด Thaw"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -16954,6 +17116,12 @@
             "value" : "Сбросить %@"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รีเซต %@"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17036,6 +17204,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сбросить все настройки"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รีเซตการตั้งค่าทั้งหมด"
           }
         },
         "zh-Hans" : {
@@ -17121,6 +17295,12 @@
             "value" : "Сбросить все настройки до значений по умолчанию. Это действие нельзя отменить."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รีเซตการตั้งค่าทั้งหมดเป็นค่าเริ่มต้น ไม่สามารถเลิกทำการกระทำนี้ได้"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17202,6 +17382,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сбросить все настройки?"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "รีเซตการตั้งค่าทั้งหมดหรือไม่"
           }
         },
         "zh-Hans" : {
@@ -18307,6 +18493,12 @@
             "value" : "Правый отступ"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ขอบด้านขวา"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18703,6 +18895,12 @@
             "value" : "Для отображения подсказок требуется разрешение на запись экрана."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ต้องมีสิทธิ์บันทึกหน้าจอเพื่อแสดงคำแนะนำ"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18785,6 +18983,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Для поиска элементов строки меню требуется разрешение на запись экрана."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ต้องมีสิทธิ์บันทึกหน้าจอเพื่อค้นหารายการแถบเมนู"
           }
         },
         "zh-Hans" : {
@@ -19789,6 +19993,12 @@
             "value" : "Показывать подсказку при наведении на элементы строки меню."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงคำแนะนำเมื่อวางเมาส์เหนือรายการแถบเมนูในแถบเมนูจริง"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20083,6 +20293,12 @@
             "value" : "Показывать у указателя мыши по горячей клавише"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงที่ตัวชี้เมาส์เมื่อใช้ปุ่มลัด"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -20171,6 +20387,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Показывать скрытые элементы строки меню в отдельной панели под строкой меню на этом дисплее."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงรายการแถบเมนูที่ซ่อนไว้ในแถบแยกต่างหากใต้แถบเมนูบนหน้าจอนี้"
           }
         },
         "tr" : {
@@ -20567,6 +20789,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Показывать фон строки меню"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงพื้นหลังแถบเมนู"
           }
         },
         "tr" : {
@@ -21067,6 +21295,12 @@
             "value" : "Показывать значок %@ в строке меню. Нажмите, чтобы показать скрытые элементы, дважды нажмите для всегда скрытых, правый клик для настроек."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงไอคอน %@ ในแถบเมนู คลิกเพื่อแสดงรายการที่ซ่อนไว้ ดับเบิลคลิกสำหรับซ่อนไว้เสมอ และคลิกขวาเพื่อตั้งค่า"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21157,6 +21391,12 @@
             "value" : "Показывать подсказки в строке меню"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงคำแนะนำในแถบเมนู"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -21245,6 +21485,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Показывает системный фон строки меню. Включите, если вы используете динамические обои или отключили «Показывать фон строки меню» в Системных настройках."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "แสดงพื้นหลังแถบเมนูของระบบ เปิดใช้งานนี้หากคุณใช้วอลเปเปอร์แบบไดนามิกหรือปิดใช้งาน 'แสดงพื้นหลังแถบเมนู' ในการตั้งค่าระบบ"
           }
         },
         "tr" : {
@@ -22661,6 +22907,12 @@
             "value" : "Значок %@ должен всегда оставаться в видимой секции."
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ไอคอน %@ ต้องคงอยู่ในส่วนที่มองเห็นได้เสมอ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -22749,6 +23001,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Время ожидания перед показом подсказки над элементом строки меню."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ระยะเวลาที่ต้องรอก่อนแสดงคำแนะนำเหนือรายการแถบเมนู"
           }
         },
         "tr" : {
@@ -23042,6 +23300,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Все настройки будут сброшены до значений по умолчанию. Это действие нельзя отменить."
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "การดำเนินการนี้จะรีเซตการตั้งค่าทั้งหมดเป็นค่าเริ่มต้น ไม่สามารถเลิกทำได้"
           }
         },
         "zh-Hans" : {
@@ -23740,6 +24004,12 @@
             "value" : "Задержка подсказки"
           }
         },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ความล่าช้าของคำแนะนำ"
+          }
+        },
         "tr" : {
           "stringUnit" : {
             "state" : "translated",
@@ -23828,6 +24098,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подсказки"
+          }
+        },
+        "th" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "คำแนะนำ"
           }
         },
         "tr" : {
