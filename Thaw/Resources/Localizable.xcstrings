@@ -3336,7 +3336,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Na tomto displeji zobrazovat vždy skryté položky v řádku nabídek."
+            "value" : "Na tomto displeji vždy zobrazovat skryté položky v řádku nabídek."
           }
         },
         "de" : {
@@ -6063,7 +6063,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Krokev"
+            "value" : "Véčko vlevo"
           }
         },
         "de" : {
@@ -6164,7 +6164,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Krokev (dolů)"
+            "value" : "Véčko dolů"
           }
         },
         "de" : {
@@ -7652,7 +7652,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Vývoj"
+            "value" : "Testovací"
           }
         },
         "de" : {
@@ -8852,7 +8852,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Přetáhněte a uspořádejte ikony v řádku nabídek do různých sekcí."
+            "value" : "Přetažením uspořádejte ikony v řádku nabídek do různých sekcí."
           }
         },
         "de" : {
@@ -10268,7 +10268,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Obecný"
+            "value" : "Obecné"
           }
         },
         "de" : {
@@ -12296,7 +12296,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Položky lze také uspořádat pomocí klávesy ⌘ Command a přetažením na řádku nabídek."
+            "value" : "Položky lze také uspořádat podržením klávesy ⌘ Command a přetažením v řádku nabídek."
           }
         },
         "de" : {
@@ -13815,7 +13815,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rozestupy mezi ikonami řádku nabídek"
+            "value" : "Rozestupy v řádku nabídek"
           }
         },
         "de" : {
@@ -16251,7 +16251,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Povolení uděleno"
+            "value" : "Oprávnění uděleno"
           }
         },
         "de" : {
@@ -20026,7 +20026,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Zobrazit všechny sekce při stisknutí klávesy ⌘ Command a tažení ikon v řádku nabídek"
+            "value" : "Zobrazit všechny sekce podržením klávesy ⌘ Command a tažením ikon v řádku nabídek"
           }
         },
         "de" : {
@@ -24847,7 +24847,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Použijte vložený tvar na displejích s výřezem"
+            "value" : "Rozdělený řádek nabídek na displejích s výřezem"
           }
         },
         "de" : {
