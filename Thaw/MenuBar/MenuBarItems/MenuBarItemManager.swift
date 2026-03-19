@@ -2871,16 +2871,21 @@ extension MenuBarItemManager {
         // Build a set of bundle IDs that have items with saved sections in hidden/always-hidden.
         // This protects multi-icon apps that the user has explicitly placed in hidden sections
         // without preventing auto-relocation of new items from apps not yet seen.
+        //
+        // NOTE: We extract bundle IDs directly from savedSectionOrder without requiring items
+        // to be currently present. This is critical when the always-hidden section is disabled,
+        // because items from always-hidden end up in hidden/visible and would otherwise be
+        // treated as "new" and relocated.
         var bundleIDsWithSavedHiddenItems = Set<String>()
         for (sectionKeyString, identifiers) in savedSectionOrder {
             guard sectionKeyString == "hidden" || sectionKeyString == "alwaysHidden" else { continue }
             for identifier in identifiers {
-                // Extract bundle ID from identifier (format: "namespace:title:instanceIndex")
+                // Extract namespace from identifier (format: "namespace:title:instanceIndex")
+                // For app items, the namespace IS the bundle ID
                 let ns = identifier.split(separator: ":", maxSplits: 1).first.map(String.init)
-                if let ns,
-                   let matchingItem = items.first(where: { $0.tag.namespace.description == ns }),
-                   let bundleID = bundleID(for: matchingItem) {
-                    bundleIDsWithSavedHiddenItems.insert(bundleID)
+                if let ns, ns.contains(".") {
+                    // Only add if it looks like a bundle ID (contains at least one dot)
+                    bundleIDsWithSavedHiddenItems.insert(ns)
                 }
             }
         }
@@ -2975,14 +2980,24 @@ extension MenuBarItemManager {
             }
 
             let isNewIdentity = !knownItemIdentifiers.contains(identifier)
-            let isNewID = previousIDs.isEmpty ? isNewIdentity : !previousIDs.contains(item.windowID)
             let notPlacedHidden = !hiddenTags.contains(item.tag) && !alwaysHiddenTags.contains(item.tag)
+
+            // Debug logging to understand why items are being relocated
+            if !hasSavedSection && !hasBundleIDWithSavedHiddenItems {
+                let isNewID = previousIDs.isEmpty ? isNewIdentity : !previousIDs.contains(item.windowID)
+                MenuBarItemManager.diagLog.debug("relocateNewLeftmostItems candidate: \(item.logString), isNewID=\(isNewID), isNewIdentity=\(isNewIdentity), notPlacedHidden=\(notPlacedHidden), identifier=\(identifier), uniqueID=\(item.uniqueIdentifier)")
+            }
+
             // Note: We removed the broad bundle ID pinning check because it was
             // preventing new items from apps like SwiftBar from being auto-relocated when
             // other items from the same app were in hidden sections. Per-item tracking via
             // notPlacedHidden and knownItemIdentifiers is sufficient for most cases.
             // The hasBundleIDWithSavedHiddenItems check above handles multi-icon apps.
-            return notPlacedHidden && (isNewID || isNewIdentity)
+            //
+            // IMPORTANT: Only relocate based on identity, not windowID. When an item gets a
+            // new windowID (e.g., after another app launches), it shouldn't be relocated if
+            // we already know its identity. This prevents existing items from jumping around.
+            return notPlacedHidden && isNewIdentity
         }
         guard let candidate else {
             if !leftmostItems.isEmpty && savedSectionForIdentifier.isEmpty == false {
