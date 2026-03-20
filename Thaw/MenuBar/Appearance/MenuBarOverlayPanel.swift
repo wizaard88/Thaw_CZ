@@ -453,7 +453,8 @@ final class MenuBarOverlayPanel: NSPanel {
         else {
             return
         }
-        applicationMenuFrame = screen.getApplicationMenuFrame()
+        // Use ignoreNotch: true to get the full menu frame for visual overlay
+        applicationMenuFrame = screen.getApplicationMenuFrame(ignoreNotch: true)
     }
 
     /// Stores the area of the desktop wallpaper that is under the menu bar

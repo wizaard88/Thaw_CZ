@@ -715,15 +715,18 @@ extension NSScreen {
     ///
     /// Results are cached per-display and invalidated when the frontmost
     /// application changes, avoiding repeated Accessibility API round-trips.
-    /// - Parameter bypassCache: If `true`, always queries the Accessibility API
-    ///   instead of using cached values. Use this when polling for changes.
-    func getApplicationMenuFrame(bypassCache: Bool = false) -> CGRect? {
+    /// - Parameters:
+    ///   - bypassCache: If `true`, always queries the Accessibility API
+    ///     instead of using cached values. Use this when polling for changes.
+    ///   - ignoreNotch: If `true`, returns the full menu frame without capping
+    ///     at the notch. Use this for visual overlay calculations.
+    func getApplicationMenuFrame(bypassCache: Bool = false, ignoreNotch: Bool = false) -> CGRect? {
         NSScreen.invalidateApplicationMenuFrameCacheIfNeeded()
         if !bypassCache, let cached = NSScreen.applicationMenuFrameCache[displayID] {
             return cached
         }
 
-        let result = computeApplicationMenuFrame()
+        let result = computeApplicationMenuFrame(ignoreNotch: ignoreNotch)
         if !bypassCache, let result {
             NSScreen.applicationMenuFrameCache[displayID] = result
         }
@@ -732,7 +735,9 @@ extension NSScreen {
 
     /// Performs the actual Accessibility API queries to determine the
     /// application menu frame. Called only on cache miss.
-    private func computeApplicationMenuFrame() -> CGRect? {
+    /// - Parameter ignoreNotch: If `true`, returns the full menu frame without
+    ///   capping at the notch.
+    private func computeApplicationMenuFrame(ignoreNotch: Bool = false) -> CGRect? {
         let displayBounds = CGDisplayBounds(displayID)
 
         // Accessibility API has trouble with secondary screens.
@@ -784,7 +789,7 @@ extension NSScreen {
         }
 
         // Avoid counting the notch as usable application menu width.
-        if let notch = frameOfNotch {
+        if !ignoreNotch, let notch = frameOfNotch {
             let cappedWidth = min(applicationMenuFrame.width, notch.minX - frame.minX)
             return CGRect(
                 x: applicationMenuFrame.minX,
