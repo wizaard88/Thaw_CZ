@@ -552,7 +552,9 @@ final class ControlItem {
 
         switch event.type {
         case .leftMouseDown:
-            let modifierFlags = NSEvent.modifierFlags
+            // Capture modifier flags from the event to ensure we have the state
+            // at the time of the click, not when the Task executes.
+            let modifierFlags = event.modifierFlags
 
             // Running this from a Task seems to improve the visual
             // responsiveness of the status item's button.
