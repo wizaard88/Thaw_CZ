@@ -901,8 +901,26 @@ extension HIDEventManager {
         // whenever the item cache changes. This avoids per-event
         // IPC calls to the Window Server.
         let entries = windowBoundsLock.withLock { $0 }
-        return entries.contains { entry in
+        let cacheHit = entries.contains { entry in
             entry.bounds.contains(mouseLocation)
+        }
+
+        // If we found a hit in the cache, return early.
+        if cacheHit {
+            return true
+        }
+
+        // If the cache missed, query the Window Server directly as a fallback.
+        // This handles the case where items were just shown and the cache
+        // hasn't been updated yet.
+        let windowIDs = Bridging.getMenuBarWindowList(option: [
+            .onScreen, .activeSpace, .itemsOnly,
+        ])
+        return windowIDs.contains { windowID in
+            guard let bounds = Bridging.getWindowBounds(for: windowID) else {
+                return false
+            }
+            return bounds.contains(mouseLocation)
         }
     }
 
