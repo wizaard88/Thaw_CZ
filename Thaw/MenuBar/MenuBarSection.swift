@@ -73,6 +73,71 @@ final class MenuBarSection {
         return appState.settings.displaySettings.useIceBar(for: displayID)
     }
 
+    /// The gap that macOS leaves to the left and right of the notch (in points).
+    private static let notchGap: CGFloat = 24
+
+    /// Checks whether there is enough space to show the hidden items inline
+    /// on the given screen, accounting for the notch and its required gaps.
+    ///
+    /// - Parameter screen: The screen to check space on.
+    /// - Returns: `true` if items will fit without extending into the notch area.
+    private func canShowItemsInline(on screen: NSScreen) -> Bool {
+        guard let appState else { return false }
+
+        // Get the application menu frame to determine where items start
+        guard let appMenuFrame = screen.getApplicationMenuFrame() else {
+            return true // If we can't determine, assume it fits
+        }
+
+        // Calculate total width of items in the sections we want to show
+        var totalItemsWidth: CGFloat = 0
+
+        switch name {
+        case .visible, .hidden:
+            // Include both hidden and visible items
+            let hiddenItems = appState.itemManager.itemCache[Name.hidden]
+            let visibleItems = appState.itemManager.itemCache[Name.visible]
+            let hiddenWidth = hiddenItems.reduce(0) { acc, item in acc + item.bounds.width }
+            let visibleWidth = visibleItems.reduce(0) { acc, item in acc + item.bounds.width }
+            totalItemsWidth = hiddenWidth + visibleWidth
+        case .alwaysHidden:
+            // Include always-hidden, hidden, and visible items
+            let alwaysHiddenItems = appState.itemManager.itemCache[Name.alwaysHidden]
+            let hiddenItems = appState.itemManager.itemCache[Name.hidden]
+            let visibleItems = appState.itemManager.itemCache[Name.visible]
+            let alwaysHiddenWidth = alwaysHiddenItems.reduce(0) { acc, item in acc + item.bounds.width }
+            let hiddenWidth = hiddenItems.reduce(0) { acc, item in acc + item.bounds.width }
+            let visibleWidth = visibleItems.reduce(0) { acc, item in acc + item.bounds.width }
+            totalItemsWidth = alwaysHiddenWidth + hiddenWidth + visibleWidth
+        }
+
+        // Get the right edge of the application menu
+        let appMenuRightEdge = appMenuFrame.maxX
+
+        // Check if screen has a notch
+        if let notch = screen.frameOfNotch {
+            // macOS leaves a 24px gap on both sides of the notch
+            let usableLeftOfNotch = notch.minX - Self.notchGap
+            let usableRightOfNotchStart = notch.maxX + Self.notchGap
+
+            // Calculate available space to the left of the notch (from app menu end)
+            let spaceLeftOfNotch = max(0, usableLeftOfNotch - appMenuRightEdge)
+
+            // Calculate available space to the right of the notch (until screen edge)
+            let spaceRightOfNotch = screen.visibleFrame.maxX - usableRightOfNotchStart
+
+            // Total usable space is sum of space on both sides of the notch
+            let totalUsableSpace = spaceLeftOfNotch + spaceRightOfNotch
+
+            // Check if items fit within usable space
+            return totalItemsWidth <= totalUsableSpace
+        } else {
+            // No notch - just check against visible frame
+            let availableSpace = screen.visibleFrame.maxX - appMenuRightEdge
+            return totalItemsWidth <= availableSpace
+        }
+    }
+
     /// A weak reference to the menu bar manager.
     private weak var menuBarManager: MenuBarManager? {
         appState?.menuBarManager
@@ -209,7 +274,20 @@ final class MenuBarSection {
             return
         }
 
-        if useIceBar {
+        // Determine whether we should use the Ice Bar based on settings.
+        let shouldUseIceBarBasedOnSettings = useIceBar
+
+        // Check if items will fit inline (only relevant when not already using Ice Bar).
+        var canShowInline = true
+        if !shouldUseIceBarBasedOnSettings, let screen = screenForIceBar {
+            canShowInline = canShowItemsInline(on: screen)
+            if !canShowInline {
+                diagLog.info("Not enough space to show items inline, falling back to Ice Bar")
+            }
+        }
+
+        // Use Ice Bar if settings say so OR if items won't fit inline.
+        if shouldUseIceBarBasedOnSettings || !canShowInline {
             // Make sure hidden and always-hidden control items are collapsed.
             // Still update the visible control item (Ice icon) state to show
             // its alternate icon.

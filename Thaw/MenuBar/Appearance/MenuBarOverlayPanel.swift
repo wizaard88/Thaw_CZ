@@ -166,9 +166,18 @@ final class MenuBarOverlayPanel: NSPanel {
             backing: .buffered,
             defer: false
         )
-        self.level = appState.appearanceManager.configuration.showsMenuBarBackground
-            ? NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.statusWindow)) - 1)
-            : .statusBar
+
+        /*
+         Idealy we would move it down one level, so the icons and app menu text is not tinted.
+         But that for some reason this fails to draw the OverlayPanel on startup at the correct
+         level entirely. so we Draw it at statusBar level for now.
+
+         self.level = appState.appearanceManager.configuration.showsMenuBarBackground
+             ? NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.statusWindow)) - 1)
+             : .statusBar
+          */
+
+        self.level = .statusBar
         self.title = String(localized: "Menu Bar Overlay")
         self.backgroundColor = .clear
         self.hasShadow = false
@@ -285,7 +294,7 @@ final class MenuBarOverlayPanel: NSPanel {
                     try Task.checkCancellation()
                     guard let self else { return }
                     if let latestFrame = self.owningScreen
-                        .getApplicationMenuFrame(),
+                        .getApplicationMenuFrame(bypassCache: true),
                         latestFrame != self.applicationMenuFrame
                     {
                         self.insertUpdateFlag(.applicationMenuFrame)
@@ -444,7 +453,8 @@ final class MenuBarOverlayPanel: NSPanel {
         else {
             return
         }
-        applicationMenuFrame = screen.getApplicationMenuFrame()
+        // Use ignoreNotch: true to get the full menu frame for visual overlay
+        applicationMenuFrame = screen.getApplicationMenuFrame(ignoreNotch: true)
     }
 
     /// Stores the area of the desktop wallpaper that is under the menu bar
@@ -832,11 +842,14 @@ private final class MenuBarOverlayPanelContentView: NSView {
 
         let leadingPathBounds: CGRect = {
             guard
-                var maxX = overlayPanel?.applicationMenuFrame?.width,
-                maxX > 0
+                let applicationMenuFrame = overlayPanel?.applicationMenuFrame,
+                applicationMenuFrame.width > 0
             else {
                 return .zero
             }
+            // Calculate offset to account for menu position relative to rect origin
+            let offset = applicationMenuFrame.origin.x - rect.minX
+            var maxX = applicationMenuFrame.maxX
             if shouldInset {
                 maxX += 10
                 if info.leading.leadingEndCap == .square {
@@ -848,7 +861,7 @@ private final class MenuBarOverlayPanelContentView: NSView {
             return CGRect(
                 x: rect.minX + fullConfiguration.leftMargin,
                 y: rect.minY,
-                width: max(0, maxX - fullConfiguration.leftMargin),
+                width: max(0, maxX - offset - fullConfiguration.leftMargin),
                 height: rect.height
             )
         }()
