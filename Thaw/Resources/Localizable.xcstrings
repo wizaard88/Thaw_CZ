@@ -797,6 +797,12 @@
             "value" : "%@ กำลังทำงาน การเรียกใช้โปรแกรมจัดการแถบเมนูหลายตัวในเวลาเดียวกันอาจทำให้เกิดปัญหาด้านการแสดงผลและพฤติกรรมที่ไม่คาดคิด ลองปิด %@ ก่อนใช้ Thaw"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$@ şu anda çalışıyor. Birden fazla menü çubuğu yöneticisini aynı anda çalıştırmak, görüntü sorunlarına ve beklenmedik davranışlara neden olabilir. Thaw'ı kullanmadan önce %2$@ uygulamasından çıkmayı düşünün."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -6827,6 +6833,12 @@
             "value" : "พบโปรแกรมจัดการแถบเมนูที่ขัดแย้ง"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Çakışan Menü Çubuğu Yöneticisi Algılandı"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -7017,6 +7029,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ดำเนินการต่อไป"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Yine de Devam Et"
           }
         },
         "zh-Hans" : {
@@ -16728,6 +16746,12 @@
             "value" : "ปิด Thaw"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Thaw'dan Çık"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17122,6 +17146,12 @@
             "value" : "รีเซ็ต %@"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ Sıfırla"
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17210,6 +17240,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "รีเซ็ตการตั้งค่าทั้งหมด"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tüm ayarları sıfırla"
           }
         },
         "zh-Hans" : {
@@ -17301,6 +17337,12 @@
             "value" : "รีเซ็ตการตั้งค่าทั้งหมดเป็นค่าเริ่มต้น ไม่สามารถเลิกทำการกระทำนี้ได้"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tüm ayarları varsayılan değerlerine sıfırlar. Bu işlem geri alınamaz."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -17388,6 +17430,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "รีเซ็ตการตั้งค่าทั้งหมดหรือไม่"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tüm ayarlar sıfırlansın mı?"
           }
         },
         "zh-Hans" : {
@@ -18901,6 +18949,12 @@
             "value" : "ต้องมีสิทธิ์บันทึกหน้าจอเพื่อแสดงคำแนะนำ"
           }
         },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Araç ipuçlarını görüntülemek için ekran kaydı izni gereklidir."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18989,6 +19043,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ต้องมีสิทธิ์บันทึกหน้าจอเพื่อค้นหารายการแถบเมนู"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Menü çubuğu öğelerini aramak için ekran kaydı izni gereklidir."
           }
         },
         "zh-Hans" : {
@@ -23306,6 +23366,12 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "การดำเนินการนี้จะรีเซ็ตการตั้งค่าทั้งหมดเป็นค่าเริ่มต้น ไม่สามารถเลิกทำได้"
+          }
+        },
+        "tr" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Bu işlem tüm ayarları varsayılan değerlerine sıfırlayacaktır. Bu işlem geri alınamaz."
           }
         },
         "zh-Hans" : {
