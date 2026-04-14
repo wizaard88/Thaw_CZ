@@ -2062,7 +2062,7 @@ extension MenuBarItemManager {
             MouseHelpers.showCursor()
         }
 
-        let maxAttempts = maxMoveAttempts
+        let maxAttempts = max(1, maxMoveAttempts)
         for n in 1 ... maxAttempts {
             guard !Task.isCancelled else {
                 throw EventError.cannotComplete
