@@ -4372,7 +4372,7 @@ extension MenuBarItemManager {
             for uid in fullSequence {
                 guard !Task.isCancelled else { break }
 
-                var freshItems = await MenuBarItem.getMenuBarItems(option: .activeSpace)
+                let freshItems = await MenuBarItem.getMenuBarItems(option: .activeSpace)
 
                 let isControlUID = uid == hiddenCtrlUID || uid == ahCtrlUID
                 guard let item = freshItems.first(where: {
