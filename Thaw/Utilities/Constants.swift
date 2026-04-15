@@ -53,7 +53,7 @@ enum Constants {
 
     /// Returns a required URL from Info.plist.
     private static func requiredInfoPlistURL(
-        _ key: String,
+        _ key: String
     ) -> URL {
         guard
             let value = Bundle.main.object(forInfoDictionaryKey: key) as? String,
