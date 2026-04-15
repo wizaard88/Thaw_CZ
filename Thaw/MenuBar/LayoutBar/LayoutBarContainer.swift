@@ -51,7 +51,7 @@ final class LayoutBarContainer: NSView {
     /// The views are laid out from left to right in the order that they
     /// appear in the array. The ``spacing`` property determines the amount
     /// of space between each view.
-    var arrangedViews = [LayoutBarItemView]() {
+    var arrangedViews = [LayoutBarArrangedView]() {
         didSet {
             layoutArrangedViews(oldViews: oldValue)
         }
@@ -82,14 +82,18 @@ final class LayoutBarContainer: NSView {
         var c = Set<AnyCancellable>()
 
         if let appState {
-            appState.itemManager.$itemCache
-                .sink { [weak self] cache in
-                    guard let self else {
-                        return
-                    }
-                    setArrangedViews(items: cache.managedItems(for: section))
+            Publishers.CombineLatest3(
+                appState.itemManager.$itemCache,
+                appState.itemManager.$newItemsPlacement,
+                appState.settings.advanced.$enableAlwaysHiddenSection
+            )
+            .sink { [weak self] cache, _, _ in
+                guard let self else {
+                    return
                 }
-                .store(in: &c)
+                setArrangedViews(items: cache.managedItems(for: section))
+            }
+            .store(in: &c)
 
             appState.imageCache.$images
                 .debounce(for: .milliseconds(50), scheduler: DispatchQueue.main)
@@ -114,7 +118,7 @@ final class LayoutBarContainer: NSView {
     ///
     /// - Parameter oldViews: The old value of the container's arranged views.
     ///   Pass `nil` to use the current ``arrangedViews`` array.
-    private func layoutArrangedViews(oldViews: [LayoutBarItemView]? = nil) {
+    private func layoutArrangedViews(oldViews: [LayoutBarArrangedView]? = nil) {
         defer {
             shouldAnimateNextLayoutPass = true
         }
@@ -186,14 +190,26 @@ final class LayoutBarContainer: NSView {
             arrangedViews.removeAll()
             return
         }
-        var newViews = [LayoutBarItemView]()
+        var newViews = [LayoutBarArrangedView]()
+        let itemIdentifiers = items.map(\.uniqueIdentifier)
+        let badgeIndex = appState.itemManager.newItemsBadgeIndex(in: section, itemIdentifiers: itemIdentifiers)
         for item in items {
-            if let existingView = arrangedViews.first(where: { $0.item == item }) {
+            if let existingView = arrangedViews.first(where: {
+                if case let .item(existingItem) = $0.kind {
+                    return existingItem == item
+                }
+                return false
+            }) {
                 newViews.append(existingView)
             } else {
                 let view = LayoutBarItemView(appState: appState, item: item)
                 newViews.append(view)
             }
+        }
+        if let badgeIndex {
+            let badgeView = arrangedViews.first(where: { $0.isNewItemsBadge }) ?? LayoutBarNewItemsBadgeView()
+            let insertionIndex = badgeIndex.clamped(to: newViews.startIndex ... newViews.endIndex)
+            newViews.insert(badgeView, at: insertionIndex)
         }
         arrangedViews = newViews
     }
@@ -208,7 +224,7 @@ final class LayoutBarContainer: NSView {
     /// - Returns: A dragging operation.
     @discardableResult
     func updateArrangedViewsForDrag(with draggingInfo: NSDraggingInfo, phase: DraggingPhase) -> NSDragOperation {
-        guard let sourceView = draggingInfo.draggingSource as? LayoutBarItemView else {
+        guard let sourceView = draggingInfo.draggingSource as? LayoutBarArrangedView else {
             return []
         }
         switch phase {
@@ -285,7 +301,7 @@ final class LayoutBarContainer: NSView {
     ///
     /// - Parameter xPosition: A floating point value representing an X
     ///   position within the coordinate system of the container view.
-    func arrangedView(nearestTo xPosition: CGFloat) -> LayoutBarItemView? {
+    func arrangedView(nearestTo xPosition: CGFloat) -> LayoutBarArrangedView? {
         arrangedViews.min { view1, view2 in
             let distance1 = abs(view1.frame.midX - xPosition)
             let distance2 = abs(view2.frame.midX - xPosition)
