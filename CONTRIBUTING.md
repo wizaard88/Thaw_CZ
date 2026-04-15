@@ -36,14 +36,7 @@ We want to fix all issues as soon as possible, but before fixing a bug we need t
 If the app crashed — attaching a log file will help us significantly, you can find these in Thaw's settings under the General tab.
 
 ### Translations
-If you want to help translate Thaw into your language or improve existing ones, you'll need Xcode 16.4+.
-
-1. Open `Thaw.xcodeproj` from your cloned fork.
-2. Navigate to `Thaw -> Resources -> Localizable.xcstrings`.
-3. Add a new language using the **+** button at the bottom or update existing strings.
-4. Submit a Pull Request with your changes using the [Localization / Translation PR template][lt].
-
-_Note: You can see the exact completion percentage for each language directly in the Xcode String Catalog editor._
+If you want to help translate Thaw into your language or improve existing ones, head over to [Crowdin](https://crowdin.com/project/thaw) and start contributing.
 
 ### Documentation improvements
 
