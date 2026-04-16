@@ -254,8 +254,12 @@ final class LayoutBarContainer: NSView {
             }
             // convert dragging location from window coordinates
             let draggingLocation = convert(draggingInfo.draggingLocation, from: nil)
+            // When dragging a regular item (not the badge), exclude the badge
+            // from being a swap destination. The badge position should only
+            // change when the user explicitly drags the badge itself.
+            let excludeBadge = !sourceView.isNewItemsBadge
             guard
-                let destinationView = arrangedView(nearestTo: draggingLocation.x),
+                let destinationView = arrangedView(nearestTo: draggingLocation.x, excludingBadge: excludeBadge),
                 destinationView !== sourceView,
                 // don't rearrange if destination is disabled
                 destinationView.isEnabled,
@@ -299,10 +303,15 @@ final class LayoutBarContainer: NSView {
     /// The nearest arranged view is defined as the arranged view whose
     /// horizontal center is closest to `xPosition`.
     ///
-    /// - Parameter xPosition: A floating point value representing an X
-    ///   position within the coordinate system of the container view.
-    func arrangedView(nearestTo xPosition: CGFloat) -> LayoutBarArrangedView? {
-        arrangedViews.min { view1, view2 in
+    /// - Parameters:
+    ///   - xPosition: A floating point value representing an X position
+    ///     within the coordinate system of the container view.
+    ///   - excludingBadge: If `true`, the New Items badge is excluded from
+    ///     consideration. Use this when dragging regular items to prevent
+    ///     them from swapping with the badge.
+    func arrangedView(nearestTo xPosition: CGFloat, excludingBadge: Bool = false) -> LayoutBarArrangedView? {
+        let candidates = excludingBadge ? arrangedViews.filter { !$0.isNewItemsBadge } : arrangedViews
+        return candidates.min { view1, view2 in
             let distance1 = abs(view1.frame.midX - xPosition)
             let distance2 = abs(view2.frame.midX - xPosition)
             return distance1 < distance2

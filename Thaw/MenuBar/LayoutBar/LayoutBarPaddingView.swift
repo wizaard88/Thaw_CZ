@@ -225,6 +225,16 @@ final class LayoutBarPaddingView: NSView {
                 // and force a refresh since updates were blocked during the move.
                 self.container.canSetArrangedViews = true
                 if let appState = self.container.appState {
+                    // Update the badge anchor BEFORE rebuilding views, using the
+                    // current visual arrangement from the drag. This ensures
+                    // setArrangedViews uses the correct anchor position.
+                    // Only update if this section actually contains the badge.
+                    if self.container.arrangedViews.contains(where: { $0.isNewItemsBadge }) {
+                        appState.itemManager.updateNewItemsPlacement(
+                            section: self.container.section,
+                            arrangedViews: self.container.arrangedViews
+                        )
+                    }
                     let items = appState.itemManager.itemCache.managedItems(for: self.container.section)
                     self.container.setArrangedViews(items: items)
                 }
