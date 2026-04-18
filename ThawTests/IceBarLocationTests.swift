@@ -85,4 +85,39 @@ final class IceBarLocationTests: XCTestCase {
         XCTAssertEqual(try decoder.decode(IceBarLocation.self, from: XCTUnwrap("1".data(using: .utf8))), .mousePointer)
         XCTAssertEqual(try decoder.decode(IceBarLocation.self, from: XCTUnwrap("2".data(using: .utf8))), .iceIcon)
     }
+
+    // MARK: - fromString() Tests
+
+    func testFromStringDynamic() {
+        XCTAssertEqual(IceBarLocation.fromString("dynamic"), .dynamic)
+    }
+
+    func testFromStringMousePointer() {
+        XCTAssertEqual(IceBarLocation.fromString("mousePointer"), .mousePointer)
+    }
+
+    func testFromStringIceIcon() {
+        XCTAssertEqual(IceBarLocation.fromString("iceIcon"), .iceIcon)
+    }
+
+    func testFromStringNumericZero() {
+        XCTAssertEqual(IceBarLocation.fromString("0"), .dynamic)
+    }
+
+    func testFromStringNumericOne() {
+        XCTAssertEqual(IceBarLocation.fromString("1"), .mousePointer)
+    }
+
+    func testFromStringNumericTwo() {
+        XCTAssertEqual(IceBarLocation.fromString("2"), .iceIcon)
+    }
+
+    func testFromStringInvalid() {
+        XCTAssertNil(IceBarLocation.fromString("invalid"))
+        XCTAssertNil(IceBarLocation.fromString("3"))
+        XCTAssertNil(IceBarLocation.fromString(""))
+        XCTAssertNil(IceBarLocation.fromString("Dynamic")) // case sensitive
+        XCTAssertNil(IceBarLocation.fromString("mouse_pointer")) // snake_case not supported
+        XCTAssertNil(IceBarLocation.fromString("ice_icon"))
+    }
 }

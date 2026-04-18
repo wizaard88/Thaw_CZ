@@ -63,4 +63,39 @@ final class RehideStrategyTests: XCTestCase {
         XCTAssertTrue(RehideStrategy.allCases.contains(.timed))
         XCTAssertTrue(RehideStrategy.allCases.contains(.focusedApp))
     }
+
+    // MARK: - fromString() Tests
+
+    func testFromStringSmart() {
+        XCTAssertEqual(RehideStrategy.fromString("smart"), .smart)
+    }
+
+    func testFromStringTimed() {
+        XCTAssertEqual(RehideStrategy.fromString("timed"), .timed)
+    }
+
+    func testFromStringFocusedApp() {
+        XCTAssertEqual(RehideStrategy.fromString("focusedApp"), .focusedApp)
+    }
+
+    func testFromStringNumericZero() {
+        XCTAssertEqual(RehideStrategy.fromString("0"), .smart)
+    }
+
+    func testFromStringNumericOne() {
+        XCTAssertEqual(RehideStrategy.fromString("1"), .timed)
+    }
+
+    func testFromStringNumericTwo() {
+        XCTAssertEqual(RehideStrategy.fromString("2"), .focusedApp)
+    }
+
+    func testFromStringInvalid() {
+        XCTAssertNil(RehideStrategy.fromString("invalid"))
+        XCTAssertNil(RehideStrategy.fromString("3"))
+        XCTAssertNil(RehideStrategy.fromString(""))
+        XCTAssertNil(RehideStrategy.fromString("Smart")) // case sensitive
+        XCTAssertNil(RehideStrategy.fromString("TIMED"))
+        XCTAssertNil(RehideStrategy.fromString("focused_app")) // snake_case not supported
+    }
 }
