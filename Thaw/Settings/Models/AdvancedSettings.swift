@@ -92,102 +92,22 @@ final class AdvancedSettings: ObservableObject {
     private func configureCancellables() {
         var c = Set<AnyCancellable>()
 
-        $enableAlwaysHiddenSection
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { enable in
-                Defaults.set(enable, forKey: .enableAlwaysHiddenSection)
-            }
-            .store(in: &c)
-
-        $useOptionClickToShowAlwaysHiddenSection
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { enable in
-                Defaults.set(enable, forKey: .useOptionClickToShowAlwaysHiddenSection)
-            }
-            .store(in: &c)
-
-        $showAllSectionsOnUserDrag
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { showAll in
-                Defaults.set(showAll, forKey: .showAllSectionsOnUserDrag)
-            }
-            .store(in: &c)
-
-        $sectionDividerStyle
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { style in
-                Defaults.set(style.rawValue, forKey: .sectionDividerStyle)
-            }
-            .store(in: &c)
-
-        $hideApplicationMenus
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { shouldHide in
-                Defaults.set(shouldHide, forKey: .hideApplicationMenus)
-            }
-            .store(in: &c)
-
-        $enableSecondaryContextMenu
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { enable in
-                Defaults.set(enable, forKey: .enableSecondaryContextMenu)
-            }
-            .store(in: &c)
-
-        $showOnHoverDelay
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { delay in
-                Defaults.set(delay, forKey: .showOnHoverDelay)
-            }
-            .store(in: &c)
-
-        $tooltipDelay
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { delay in
-                Defaults.set(delay, forKey: .tooltipDelay)
-            }
-            .store(in: &c)
-
-        $showMenuBarTooltips
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { show in
-                Defaults.set(show, forKey: .showMenuBarTooltips)
-            }
-            .store(in: &c)
-
-        $iconRefreshInterval
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { interval in
-                Defaults.set(interval, forKey: .iconRefreshInterval)
-            }
-            .store(in: &c)
-
-        $enableDiagnosticLogging
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { enable in
-                Defaults.set(enable, forKey: .enableDiagnosticLogging)
-                DiagnosticLogger.shared.isEnabled = enable
-            }
-            .store(in: &c)
-
-        $useLCSSortingOnNotchedDisplays
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { enable in
-                Defaults.set(enable, forKey: .useLCSSortingOnNotchedDisplays)
-            }
-            .store(in: &c)
+        $enableAlwaysHiddenSection.persistToDefaults(key: .enableAlwaysHiddenSection, in: &c)
+        $useOptionClickToShowAlwaysHiddenSection.persistToDefaults(key: .useOptionClickToShowAlwaysHiddenSection, in: &c)
+        $showAllSectionsOnUserDrag.persistToDefaults(key: .showAllSectionsOnUserDrag, in: &c)
+        $sectionDividerStyle.persistToDefaults(key: .sectionDividerStyle, transform: \.rawValue, in: &c)
+        $hideApplicationMenus.persistToDefaults(key: .hideApplicationMenus, in: &c)
+        $enableSecondaryContextMenu.persistToDefaults(key: .enableSecondaryContextMenu, in: &c)
+        $showOnHoverDelay.persistToDefaults(key: .showOnHoverDelay, in: &c)
+        $tooltipDelay.persistToDefaults(key: .tooltipDelay, in: &c)
+        $showMenuBarTooltips.persistToDefaults(key: .showMenuBarTooltips, in: &c)
+        $iconRefreshInterval.persistToDefaults(key: .iconRefreshInterval, in: &c)
+        $enableDiagnosticLogging.persistToDefaults(
+            key: .enableDiagnosticLogging,
+            sideEffect: { DiagnosticLogger.shared.isEnabled = $0 },
+            in: &c
+        )
+        $useLCSSortingOnNotchedDisplays.persistToDefaults(key: .useLCSSortingOnNotchedDisplays, in: &c)
 
         // Observe external settings changes via Settings URI
         NotificationCenter.default

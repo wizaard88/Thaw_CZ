@@ -145,14 +145,9 @@ final class GeneralSettings: ObservableObject {
     private func configureCancellables() {
         var c = Set<AnyCancellable>()
 
-        $showIceIcon
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { showIceIcon in
-                Defaults.set(showIceIcon, forKey: .showIceIcon)
-            }
-            .store(in: &c)
+        $showIceIcon.persistToDefaults(key: .showIceIcon, in: &c)
 
+        // iceIcon requires encoding + custom icon tracking - keep manual
         $iceIcon
             .removeDuplicates()
             .receive(on: DispatchQueue.main)
@@ -172,78 +167,17 @@ final class GeneralSettings: ObservableObject {
             }
             .store(in: &c)
 
-        $customIceIconIsTemplate
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { isTemplate in
-                Defaults.set(isTemplate, forKey: .customIceIconIsTemplate)
-            }
-            .store(in: &c)
+        $customIceIconIsTemplate.persistToDefaults(key: .customIceIconIsTemplate, in: &c)
+        $useIceBar.persistToDefaults(key: .useIceBar, in: &c)
+        $useIceBarOnlyOnNotchedDisplay.persistToDefaults(key: .useIceBarOnlyOnNotchedDisplay, in: &c)
+        $iceBarLocation.persistToDefaults(key: .iceBarLocation, transform: \.rawValue, in: &c)
+        $iceBarLocationOnHotkey.persistToDefaults(key: .iceBarLocationOnHotkey, in: &c)
+        $showOnClick.persistToDefaults(key: .showOnClick, in: &c)
+        $showOnDoubleClick.persistToDefaults(key: .showOnDoubleClick, in: &c)
+        $showOnHover.persistToDefaults(key: .showOnHover, in: &c)
+        $showOnScroll.persistToDefaults(key: .showOnScroll, in: &c)
 
-        $useIceBar
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { useIceBar in
-                Defaults.set(useIceBar, forKey: .useIceBar)
-            }
-            .store(in: &c)
-
-        $useIceBarOnlyOnNotchedDisplay
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { useIceBarOnlyOnNotchedDisplay in
-                Defaults.set(useIceBarOnlyOnNotchedDisplay, forKey: .useIceBarOnlyOnNotchedDisplay)
-            }
-            .store(in: &c)
-
-        $iceBarLocation
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { location in
-                Defaults.set(location.rawValue, forKey: .iceBarLocation)
-            }
-            .store(in: &c)
-
-        $iceBarLocationOnHotkey
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { iceBarLocationOnHotkey in
-                Defaults.set(iceBarLocationOnHotkey, forKey: .iceBarLocationOnHotkey)
-            }
-            .store(in: &c)
-
-        $showOnClick
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { showOnClick in
-                Defaults.set(showOnClick, forKey: .showOnClick)
-            }
-            .store(in: &c)
-
-        $showOnDoubleClick
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { showOnDoubleClick in
-                Defaults.set(showOnDoubleClick, forKey: .showOnDoubleClick)
-            }
-            .store(in: &c)
-
-        $showOnHover
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { showOnHover in
-                Defaults.set(showOnHover, forKey: .showOnHover)
-            }
-            .store(in: &c)
-
-        $showOnScroll
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { showOnScroll in
-                Defaults.set(showOnScroll, forKey: .showOnScroll)
-            }
-            .store(in: &c)
-
+        // itemSpacingOffset has side effect on appState - keep manual
         $itemSpacingOffset
             .removeDuplicates()
             .receive(on: DispatchQueue.main)
@@ -253,29 +187,9 @@ final class GeneralSettings: ObservableObject {
             }
             .store(in: &c)
 
-        $autoRehide
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { autoRehide in
-                Defaults.set(autoRehide, forKey: .autoRehide)
-            }
-            .store(in: &c)
-
-        $rehideStrategy
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { strategy in
-                Defaults.set(strategy.rawValue, forKey: .rehideStrategy)
-            }
-            .store(in: &c)
-
-        $rehideInterval
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { interval in
-                Defaults.set(interval, forKey: .rehideInterval)
-            }
-            .store(in: &c)
+        $autoRehide.persistToDefaults(key: .autoRehide, in: &c)
+        $rehideStrategy.persistToDefaults(key: .rehideStrategy, transform: \.rawValue, in: &c)
+        $rehideInterval.persistToDefaults(key: .rehideInterval, in: &c)
 
         // Observe external settings changes via Settings URI
         NotificationCenter.default
