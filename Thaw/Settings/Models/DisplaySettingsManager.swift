@@ -104,6 +104,16 @@ final class DisplaySettingsManager: ObservableObject {
         // Parse scope - it might be a simple scope or "specific:UUID"
         let (scope, specificUUID) = parseScope(from: scopeRaw)
 
+        // Validate specific UUID if provided (defense-in-depth)
+        if let uuid = specificUUID {
+            let connectedUUIDs = NSScreen.screens.compactMap { Bridging.getDisplayUUIDString(for: $0.displayID) }
+            let hasConfig = configurations[uuid] != nil
+            guard connectedUUIDs.contains(uuid) || hasConfig else {
+                diagLog.warning("DisplaySettingsManager: Ignoring change for unknown display UUID '\(uuid)'")
+                return
+            }
+        }
+
         diagLog.debug("DisplaySettingsManager: Received external change for \(key) with scope \(scope)\(specificUUID.map { " (UUID: \($0))" } ?? "")")
 
         switch key {

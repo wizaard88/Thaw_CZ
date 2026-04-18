@@ -276,6 +276,7 @@ extension Defaults {
 
         case settingsURIEnabled = "SettingsURIEnabled"
         case settingsURIWhitelist = "SettingsURIWhitelist"
+        case settingsURISigningIdentities = "SettingsURISigningIdentities"
 
         // MARK: Deprecated (Appearance Settings)
 

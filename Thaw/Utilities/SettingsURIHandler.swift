@@ -8,6 +8,7 @@
 
 import AppKit
 import Foundation
+import Security
 
 /// Handles settings manipulation via thaw:// URLs with whitelist-based security.
 @MainActor
@@ -92,7 +93,70 @@ enum SettingsURIHandler {
 
     // MARK: - Security
 
-    /// Checks if the sender is in the whitelist.
+    /// Gets the team identifier for a bundle ID by checking the app's code signature.
+    private static func getTeamIdentifier(for bundleId: String) -> String? {
+        guard let appURL = NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) else {
+            diagLog.debug("Settings URI: Cannot find app URL for \(bundleId)")
+            return nil
+        }
+
+        var staticCode: SecStaticCode?
+        let createStatus = SecStaticCodeCreateWithPath(appURL as CFURL, [], &staticCode)
+        guard createStatus == errSecSuccess, let code = staticCode else {
+            diagLog.debug("Settings URI: Failed to create static code for \(bundleId): \(createStatus)")
+            return nil
+        }
+
+        var signingInfo: CFDictionary?
+        let infoStatus = SecCodeCopySigningInformation(code, SecCSFlags(rawValue: kSecCSSigningInformation), &signingInfo)
+        guard infoStatus == errSecSuccess, let info = signingInfo as? [String: Any] else {
+            diagLog.debug("Settings URI: Failed to get signing info for \(bundleId): \(infoStatus)")
+            return nil
+        }
+
+        // Extract team identifier from signing info
+        if let teamId = info[kSecCodeInfoTeamIdentifier as String] as? String {
+            return teamId
+        }
+
+        diagLog.debug("Settings URI: No team identifier found for \(bundleId)")
+        return nil
+    }
+
+    /// Verifies that an app's current code signature matches the stored signing identity.
+    private static func verifyCodeSignature(bundleId: String, storedTeamId: String?) -> Bool {
+        // If no stored team ID, only allow if app is also unsigned (legacy entries)
+        guard let storedTeamId = storedTeamId else {
+            let currentTeamId = getTeamIdentifier(for: bundleId)
+            return currentTeamId == nil
+        }
+
+        guard let currentTeamId = getTeamIdentifier(for: bundleId) else {
+            diagLog.warning("Settings URI: App \(bundleId) is unsigned but was authorized with team ID")
+            return false
+        }
+
+        return currentTeamId == storedTeamId
+    }
+
+    /// Gets the stored signing identities dictionary.
+    private static func getSigningIdentities() -> [String: String] {
+        guard let data = Defaults.data(forKey: .settingsURISigningIdentities),
+              let identities = try? JSONDecoder().decode([String: String].self, from: data)
+        else {
+            return [:]
+        }
+        return identities
+    }
+
+    /// Saves the signing identities dictionary.
+    private static func saveSigningIdentities(_ identities: [String: String]) {
+        if let data = try? JSONEncoder().encode(identities) {
+            Defaults.set(data, forKey: .settingsURISigningIdentities)
+        }
+    }
+
+    /// Checks if the sender is in the whitelist and has valid code signature.
     static func isWhitelisted(bundleIdentifier: String?) -> Bool {
         guard let bundleId = bundleIdentifier, !bundleId.isEmpty else {
             diagLog.warning("Settings URI: No sender bundle ID provided")
@@ -100,21 +164,37 @@ enum SettingsURIHandler {
         }
 
         let whitelist = Defaults.stringArray(forKey: .settingsURIWhitelist) ?? []
-        let isAllowed = whitelist.contains(bundleId)
-
-        if isAllowed {
-            diagLog.debug("Settings URI: Authorized request from \(bundleId)")
-        } else {
+        guard whitelist.contains(bundleId) else {
             diagLog.debug("Settings URI: Unauthorized request from \(bundleId)")
+            return false
         }
 
-        return isAllowed
+        // Verify code signature matches stored identity
+        let signingIdentities = getSigningIdentities()
+        let storedTeamId = signingIdentities[bundleId]
+
+        guard verifyCodeSignature(bundleId: bundleId, storedTeamId: storedTeamId) else {
+            diagLog.warning("Settings URI: Code signature mismatch for \(bundleId)")
+            return false
+        }
+
+        diagLog.debug("Settings URI: Authorized request from \(bundleId)")
+        return true
     }
 
     /// Shows NSAlert confirmation dialog for first-time authorization.
     /// Returns true if user approves, false otherwise.
     static func promptForAuthorization(bundleId: String) -> Bool {
         let appName = getAppName(for: bundleId) ?? bundleId
+        let teamId = getTeamIdentifier(for: bundleId)
+
+        // Build informative text with signing status
+        var signingInfo = ""
+        if let teamId = teamId {
+            signingInfo = "\n\nSigned by: \(teamId)"
+        } else {
+            signingInfo = "\n\n⚠️ Warning: This app is not code-signed."
+        }
 
         let alert = NSAlert()
         alert.messageText = String(localized: "Allow \"\(appName)\" to control Thaw settings?")
@@ -129,7 +209,7 @@ enum SettingsURIHandler {
             • Change enum settings (rehide strategy, Ice Bar location)
             • Modify per-display configurations
 
-            This permission persists until manually removed in Settings > Automation.
+            This permission persists until manually removed in Settings > Automation.\(signingInfo)
             """
         )
 
@@ -141,8 +221,8 @@ enum SettingsURIHandler {
         let approved = response == .alertFirstButtonReturn
 
         if approved {
-            diagLog.info("Settings URI: User authorized \(bundleId)")
-            addToWhitelist(bundleId: bundleId)
+            diagLog.info("Settings URI: User authorized \(bundleId) (team: \(teamId ?? "unsigned"))")
+            addToWhitelist(bundleId: bundleId, teamIdentifier: teamId)
         } else {
             diagLog.info("Settings URI: User denied \(bundleId)")
         }
@@ -150,14 +230,22 @@ enum SettingsURIHandler {
         return approved
     }
 
-    /// Adds a bundle ID to the whitelist.
-    static func addToWhitelist(bundleId: String) {
+    /// Adds a bundle ID to the whitelist with its signing identity.
+    static func addToWhitelist(bundleId: String, teamIdentifier: String? = nil) {
         var whitelist = Defaults.stringArray(forKey: .settingsURIWhitelist) ?? []
         guard !whitelist.contains(bundleId) else { return }
 
         whitelist.append(bundleId)
         Defaults.set(whitelist, forKey: .settingsURIWhitelist)
-        diagLog.info("Settings URI: Added \(bundleId) to whitelist")
+
+        // Store signing identity if available
+        if let teamId = teamIdentifier {
+            var identities = getSigningIdentities()
+            identities[bundleId] = teamId
+            saveSigningIdentities(identities)
+        }
+
+        diagLog.info("Settings URI: Added \(bundleId) to whitelist (team: \(teamIdentifier ?? "unsigned"))")
         NotificationCenter.default.post(name: .settingsURIWhitelistDidChange, object: nil)
     }
 
@@ -166,6 +254,12 @@ enum SettingsURIHandler {
         var whitelist = Defaults.stringArray(forKey: .settingsURIWhitelist) ?? []
         whitelist.removeAll { $0 == bundleId }
         Defaults.set(whitelist, forKey: .settingsURIWhitelist)
+
+        // Remove signing identity
+        var identities = getSigningIdentities()
+        identities.removeValue(forKey: bundleId)
+        saveSigningIdentities(identities)
+
         diagLog.info("Settings URI: Removed \(bundleId) from whitelist")
         NotificationCenter.default.post(name: .settingsURIWhitelistDidChange, object: nil)
     }
@@ -378,9 +472,15 @@ enum SettingsURIHandler {
 
     /// Handles setting a per-display configuration value for a specific display UUID.
     private static func handlePerDisplaySetForSpecificDisplay(key: String, value: String, displayUUID: String) -> Bool {
-        // Validate UUID format (basic check: should contain dashes and not be empty)
-        guard displayUUID.contains("-") && !displayUUID.isEmpty else {
+        // Validate UUID format
+        guard UUID(uuidString: displayUUID) != nil else {
             diagLog.warning("Settings URI: Invalid display UUID format '\(displayUUID)'")
+            return false
+        }
+
+        // Validate display exists (connected or has persisted config)
+        guard getDisplayConfiguration(forUUID: displayUUID) != nil else {
+            diagLog.warning("Settings URI: Unknown display UUID '\(displayUUID)'")
             return false
         }
 
@@ -978,9 +1078,13 @@ enum SettingsURIHandler {
         }
 
         // Open callback URL
-        NSWorkspace.shared.open(callbackURL)
-        diagLog.info("Settings URI Get: Sent callback to \(callback)")
-        return true
+        let success = NSWorkspace.shared.open(callbackURL)
+        if success {
+            diagLog.info("Settings URI Get: Sent callback via scheme: \(scheme)")
+        } else {
+            diagLog.error("Settings URI Get: Failed to open callback via scheme: \(scheme)")
+        }
+        return success
     }
 
     /// Sends response via distributed notification.

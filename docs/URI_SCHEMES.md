@@ -187,7 +187,7 @@ With `display=<UUID>` parameter:
 
 #### Set a Boolean Value
 
-```
+```text
 thaw://set?key=<setting>&value=<true|false>
 ```
 
@@ -206,7 +206,7 @@ open "thaw://set?key=useIceBar&value=true"
 
 #### Toggle a Boolean Value
 
-```
+```text
 thaw://toggle?key=<setting>
 ```
 

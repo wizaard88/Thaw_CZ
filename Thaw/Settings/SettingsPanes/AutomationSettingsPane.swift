@@ -31,7 +31,7 @@ struct AutomationSettingsPane: View {
         IceSection {
             VStack(alignment: .leading, spacing: 12) {
                 Toggle("Enable Settings URI Scheme", isOn: $settings.isSettingsURIEnabled)
-                    .annotation("Allow external applications to modify Thaw settings via thaw:// URLs.")
+                    .annotation("Allow external applications to read and modify Thaw settings via thaw:// URLs.")
 
                 if !settings.isSettingsURIEnabled {
                     securityNote
@@ -41,7 +41,7 @@ struct AutomationSettingsPane: View {
     }
 
     private var securityNote: some View {
-        CalloutBox("Settings URI is disabled. External apps cannot modify Thaw settings.") {
+        CalloutBox("Settings URI is disabled. External apps cannot read or modify Thaw settings.") {
             Image(systemName: "lock.fill")
                 .foregroundStyle(.green)
         }
@@ -152,6 +152,7 @@ struct AutomationSettingsPane: View {
             }
             .buttonStyle(.plain)
             .help("Remove from whitelist")
+            .accessibilityLabel("Remove \(app.displayName) from whitelist")
         }
         .padding(.vertical, 4)
     }
@@ -169,7 +170,10 @@ struct AutomationSettingsPane: View {
                 Button("Add") {
                     addBundleId()
                 }
-                .disabled(newBundleId.isEmpty || !AutomationSettings.isValidBundleId(newBundleId))
+                .disabled({
+                    let trimmed = newBundleId.trimmingCharacters(in: .whitespacesAndNewlines)
+                    return trimmed.isEmpty || !AutomationSettings.isValidBundleId(trimmed)
+                }())
 
                 #if DEBUG
                     Button("Add Thaw (Test)") {
