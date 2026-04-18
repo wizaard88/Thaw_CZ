@@ -173,7 +173,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Handle settings manipulation URLs
         switch host {
-        case "set", "toggle":
+        case "set", "toggle", "get":
             handleSettingsURL(url, host: host, senderBundleId: senderBundleId)
             return
         default:
@@ -208,24 +208,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         // Determine effective bundle ID (auto-detected or manual override)
-        let effectiveBundleId = determineEffectiveBundleId(url: url, senderBundleId: senderBundleId)
+        guard let effectiveBundleId = determineEffectiveBundleId(url: url, senderBundleId: senderBundleId) else {
+            appState.diagLog.debug("Settings URI: Cannot determine sender bundle ID, ignoring: \(url.absoluteString)")
+            return
+        }
 
         // Verify sender is whitelisted, or prompt for first-time authorization
         if !SettingsURIHandler.isWhitelisted(bundleIdentifier: effectiveBundleId) {
-            // Try to get the sender app name for the dialog
-            let senderName: String
-            if let bundleId = effectiveBundleId,
-               let appName = SettingsURIHandler.getAppName(for: bundleId)
-            {
-                senderName = appName
-            } else if let bundleId = effectiveBundleId {
-                senderName = bundleId
-            } else {
-                senderName = "Unknown App"
-            }
-
             // Show confirmation dialog
-            let approved = SettingsURIHandler.promptForAuthorization(bundleId: effectiveBundleId ?? senderName)
+            let approved = SettingsURIHandler.promptForAuthorization(bundleId: effectiveBundleId)
             guard approved else {
                 // Unauthorized - silent fail
                 return

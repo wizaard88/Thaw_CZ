@@ -565,7 +565,7 @@ enum SettingsURIHandler {
     }
 
     /// Scope for per-display setting application.
-    enum PerDisplayScope {
+    enum PerDisplayScope: Equatable {
         case activeDisplay
         case allEnabledDisplays
         case allNonIceBarDisplays
@@ -669,9 +669,36 @@ enum SettingsURIHandler {
     }
 
     /// Gets a single setting value with metadata.
-    private static func getSettingValue(key: String, displayUUID _: String?) -> [String: Any]? {
+    private static func getSettingValue(key: String, displayUUID: String?) -> [String: Any]? {
+        // Handle per-display keys specially (not in keyMapping)
+        if perDisplayKeys.contains(key) {
+            let config = getDisplayConfiguration(forUUID: displayUUID)
+
+            switch key {
+            case "useIceBar":
+                return [
+                    "value": config.useIceBar,
+                    "type": "boolean",
+                ]
+            case "iceBarLocation":
+                return [
+                    "value": String(describing: config.iceBarLocation),
+                    "rawValue": config.iceBarLocation.rawValue,
+                    "type": "enum",
+                    "validValues": ["dynamic": 0, "mousePointer": 1, "iceIcon": 2],
+                ]
+            case "alwaysShowHiddenItems":
+                return [
+                    "value": config.alwaysShowHiddenItems,
+                    "type": "boolean",
+                ]
+            default:
+                return nil
+            }
+        }
+
         // Check if it's a boolean setting
-        if supportedBooleanKeys.contains(key) || perDisplayKeys.contains(key) {
+        if supportedBooleanKeys.contains(key) {
             guard let defaultsKey = keyMapping[key] else { return nil }
             let value = Defaults.bool(forKey: defaultsKey)
             return [
@@ -758,6 +785,25 @@ enum SettingsURIHandler {
                 "displays": displaysData,
             ],
         ]
+    }
+
+    /// Gets the display configuration for a specific UUID, or the active display if nil.
+    private static func getDisplayConfiguration(forUUID uuid: String?) -> DisplayIceBarConfiguration {
+        let configurations = Defaults.data(forKey: .displayIceBarConfigurations)
+            .flatMap { try? JSONDecoder().decode([String: DisplayIceBarConfiguration].self, from: $0) }
+            ?? [:]
+
+        if let uuid = uuid {
+            return configurations[uuid] ?? .defaultConfiguration
+        }
+
+        // Use active display
+        guard let activeDisplayID = Bridging.getActiveMenuBarDisplayID(),
+              let activeUUID = Bridging.getDisplayUUIDString(for: activeDisplayID)
+        else {
+            return .defaultConfiguration
+        }
+        return configurations[activeUUID] ?? .defaultConfiguration
     }
 
     /// Gets information for a specific display.
