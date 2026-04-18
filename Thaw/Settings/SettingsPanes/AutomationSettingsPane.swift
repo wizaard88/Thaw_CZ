@@ -225,7 +225,7 @@ struct AutomationSettingsPane: View {
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
-                Text("Whitelisted apps can toggle these settings: auto-rehide, show on click/hover/scroll/double-click, Thaw Bar, hide application menus, enable always-hidden section, show tooltips, and diagnostic logging.")
+                Text("Whitelisted apps can read settings, toggle boolean options, set numeric values (timers, delays), change enum settings (rehide strategy, Thaw Bar location), and modify per-display configurations. This includes auto-rehide, show on click/hover/scroll/double-click, Thaw Bar, hide application menus, enable always-hidden section, show tooltips, and diagnostic logging.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

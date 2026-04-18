@@ -276,6 +276,12 @@ enum SettingsURIHandler {
             return false
         }
 
+        // Reject non-finite values (NaN, Infinity)
+        guard doubleValue.isFinite else {
+            diagLog.warning("Settings URI: Non-finite value '\(value)' not allowed for \(key)")
+            return false
+        }
+
         // Validate and clamp to range
         let (minVal, maxVal) = doubleRanges[key] ?? (0, Double.greatestFiniteMagnitude)
         let clampedValue = Swift.max(minVal, Swift.min(doubleValue, maxVal))
@@ -690,7 +696,11 @@ enum SettingsURIHandler {
     private static func getSettingValue(key: String, displayUUID: String?) -> [String: Any]? {
         // Handle per-display keys specially (not in keyMapping)
         if perDisplayKeys.contains(key) {
-            let config = getDisplayConfiguration(forUUID: displayUUID)
+            // Validate display UUID if provided
+            guard let config = getDisplayConfiguration(forUUID: displayUUID) else {
+                // Unknown display UUID
+                return nil
+            }
 
             switch key {
             case "useIceBar":
@@ -806,12 +816,22 @@ enum SettingsURIHandler {
     }
 
     /// Gets the display configuration for a specific UUID, or the active display if nil.
-    private static func getDisplayConfiguration(forUUID uuid: String?) -> DisplayIceBarConfiguration {
+    /// Returns nil if a specific UUID is provided but doesn't match any connected or persisted display.
+    private static func getDisplayConfiguration(forUUID uuid: String?) -> DisplayIceBarConfiguration? {
         let configurations = Defaults.data(forKey: .displayIceBarConfigurations)
             .flatMap { try? JSONDecoder().decode([String: DisplayIceBarConfiguration].self, from: $0) }
             ?? [:]
 
         if let uuid = uuid {
+            // Check if UUID matches a connected display
+            let connectedUUIDs = NSScreen.screens.compactMap { Bridging.getDisplayUUIDString(for: $0.displayID) }
+            let isConnected = connectedUUIDs.contains(uuid)
+            let hasPersisted = configurations[uuid] != nil
+
+            // Return nil if UUID doesn't match any known display
+            guard isConnected || hasPersisted else {
+                return nil
+            }
             return configurations[uuid] ?? .defaultConfiguration
         }
 
@@ -915,8 +935,8 @@ enum SettingsURIHandler {
         return response
     }
 
-    /// Allowed schemes for callback URLs.
-    private static let allowedCallbackSchemes: Set<String> = ["https", "http", "thaw"]
+    /// Blocked schemes for callback URLs (security).
+    private static let blockedCallbackSchemes: Set<String> = ["file", "javascript", "data", "about", "blob"]
 
     /// Sends response via callback URL.
     private static func sendCallbackResponse(response: [String: Any], callback: String) -> Bool {
@@ -926,16 +946,14 @@ enum SettingsURIHandler {
             return false
         }
 
-        // Validate scheme against allowlist
-        guard let scheme = components.scheme?.lowercased(),
-              allowedCallbackSchemes.contains(scheme)
-        else {
-            diagLog.error("Settings URI Get: Callback URL has disallowed or missing scheme: \(callback)")
+        // Validate scheme exists
+        guard let scheme = components.scheme?.lowercased(), !scheme.isEmpty else {
+            diagLog.error("Settings URI Get: Callback URL missing scheme: \(callback)")
             return false
         }
 
-        // Reject dangerous scheme prefixes
-        if scheme.hasPrefix("x-apple-") || scheme == "file" {
+        // Reject dangerous schemes
+        if blockedCallbackSchemes.contains(scheme) || scheme.hasPrefix("x-apple-") {
             diagLog.error("Settings URI Get: Callback URL scheme not allowed: \(scheme)")
             return false
         }

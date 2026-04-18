@@ -259,19 +259,18 @@ open "thaw://toggle?key=useIceBar&display=XYZ789-..."
 
 ### Getting Settings (Read Operations)
 
-Thaw supports reading settings via `thaw://get` URLs. You must provide a response mechanism: either a `callback` URL or `broadcast=true` for distributed notifications.
+Thaw supports reading settings via `thaw://get` URLs. You must provide a response mechanism: either a `callback` URL (recommended) or `broadcast=true` for acknowledgement notifications.
+
+**Important:** For security reasons, full settings data is only sent via callback URL. Using `broadcast=true` returns only an acknowledgement, not the full settings payload.
 
 #### Get All Settings
 
 ```bash
-# Get all settings with callback URL
+# Get all settings with callback URL (receives full data)
 open "thaw://get?key=all&callback=droppy://thaw-response&requestId=abc123"
-
-# Or broadcast via distributed notification
-open "thaw://get?key=all&broadcast=true&requestId=abc123"
 ```
 
-**Response JSON:**
+**Response JSON (via callback):**
 ```json
 {
   "requestId": "abc123",
@@ -357,12 +356,27 @@ open "thaw://get?key=display&display=37D8832A-...&callback=droppy://thaw-respons
 - Thaw opens the provided URL with URL-encoded JSON data
 - Format: `yourapp://thaw-response?data=<url-encoded-json>`
 - Your app must implement a URI handler for the callback
+- Receives full settings data
 
-**Distributed Notification:**
+**Distributed Notification (Acknowledgement Only):**
 - Thaw broadcasts via `DistributedNotificationCenter`
 - Notification name: `com.stonerl.Thaw.settingsURIGetResponse`
-- Any listening app receives the response without implementing URI handlers
-- Less reliable if app isn't actively listening
+- **Only returns acknowledgement, not full settings data** (for security)
+- Use callback URL to receive full settings payload
+
+```bash
+# Broadcast returns only acknowledgement
+open "thaw://get?key=all&broadcast=true&requestId=abc123"
+```
+
+**Broadcast Response JSON:**
+```json
+{
+  "requestId": "abc123",
+  "status": "ack",
+  "message": "Use callback URL to receive full settings data"
+}
+```
 
 **Error Response:**
 ```json
