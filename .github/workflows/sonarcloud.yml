@@ -23,7 +23,10 @@ jobs:
             -scheme Thaw \
             -derivedDataPath Build/ \
             -destination 'platform=macOS' \
-            enableCodeCoverage=YES
+            enableCodeCoverage=YES \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
 
       - name: Install xcresultparser
         run: brew install a7ex/homebrew-formulae/xcresultparser
