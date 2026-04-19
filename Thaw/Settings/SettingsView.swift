@@ -54,19 +54,10 @@ struct SettingsView: View {
         }
     }
 
-    /// Icon width varies by sidebar row size
-    private var iconWidth: CGFloat {
-        switch sidebarRowSize {
-        case .small: 16
-        case .medium: 18
-        case .large: 20
-        @unknown default: 18
-        }
-    }
-
     /// Space for icon including padding and Label internal spacing
+    /// Icon sizes naturally to sidebarItemHeight, so we use that as basis
     private var iconSpace: CGFloat {
-        iconWidth + (sidebarPadding * 2) + 8
+        sidebarItemHeight + 8
     }
 
     /// List margins (leading/trailing padding in sidebar)
@@ -77,7 +68,8 @@ struct SettingsView: View {
     /// Dynamic sidebar width calculated from measured content
     private var dynamicSidebarWidth: CGFloat {
         let maxTextWidth = measuredTextWidths.values.max() ?? 0
-        let calculatedWidth = maxTextWidth + iconSpace + listMargins
+        // 8 = horizontal padding on label (4pt × 2 sides)
+        let calculatedWidth = maxTextWidth + iconSpace + listMargins + 8
         return max(calculatedWidth, minSidebarWidth)
     }
 
@@ -157,7 +149,6 @@ struct SettingsView: View {
             sidebarItemLabel(for: identifier, isSelected: isSelected)
         }
         .buttonStyle(.plain)
-        .listRowInsets(EdgeInsets(top: 2, leading: 6, bottom: 2, trailing: 6))
         .listRowBackground(Color.clear)
     }
 
@@ -182,7 +173,6 @@ struct SettingsView: View {
             identifier.iconResource.view
                 .foregroundStyle(sidebarTextStyle)
                 .padding(sidebarPadding)
-                .frame(width: iconWidth, height: iconWidth)
         }
         .foregroundStyle(sidebarItemForegroundStyle(isSelected: isSelected))
         .frame(maxWidth: .infinity, minHeight: sidebarItemHeight, alignment: .leading)
