@@ -208,6 +208,27 @@ final class MenuBarManager: ObservableObject {
             }
             .store(in: &c)
 
+        // Refresh average color when space or screen changes while settings visible.
+        Publishers.Merge(
+            NSWorkspace.shared.notificationCenter
+                .publisher(for: NSWorkspace.activeSpaceDidChangeNotification)
+                .replace(with: ()),
+            NotificationCenter.default
+                .publisher(for: NSApplication.didChangeScreenParametersNotification)
+                .replace(with: ())
+        )
+        .receive(on: DispatchQueue.main)
+        .sink { [weak self] in
+            guard
+                let self,
+                settingsWindow?.isVisible == true
+            else {
+                return
+            }
+            updateAverageColorInfo()
+        }
+        .store(in: &c)
+
         // Hide application menus when a section is shown (if applicable).
         Publishers.MergeMany(sections.map { $0.controlItem.$state })
             .receive(on: DispatchQueue.main)

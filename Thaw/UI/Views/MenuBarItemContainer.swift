@@ -66,10 +66,12 @@ struct MenuBarItemContainer<Content: View>: View {
 
     @ViewBuilder
     private var contentBackground: some View {
-        if appState.activeSpace.isFullscreen {
-            Color.black
-        } else if let colorInfo {
+        if let colorInfo {
+            // Trust sampled color when available - it reflects the actual
+            // space where the window is displayed.
             Color(cgColor: colorInfo.color)
+        } else if appState.activeSpace.isFullscreen {
+            Color.black
         } else {
             Color.defaultLayoutBar
         }
@@ -77,7 +79,9 @@ struct MenuBarItemContainer<Content: View>: View {
 
     @ViewBuilder
     private var contentOverlay: some View {
-        if !appState.activeSpace.isFullscreen {
+        // Show tint when we have sampled color info (window on non-fullscreen space)
+        // or when activeSpace is not fullscreen.
+        if colorInfo != nil || !appState.activeSpace.isFullscreen {
             if case .solid = configuration.tintKind {
                 Color(cgColor: configuration.tintColor)
             } else if
