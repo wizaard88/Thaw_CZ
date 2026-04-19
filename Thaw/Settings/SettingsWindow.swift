@@ -34,7 +34,7 @@ struct SettingsWindow: Scene {
                         appState.updatesManager.automaticallyChecksForUpdates = false
                     }
                 }
-                .frame(minWidth: 850, maxWidth: 1150, minHeight: 550, maxHeight: 750)
+                .frame(minWidth: 850, minHeight: 550)
         }
         .commandsRemoved()
         .windowResizability(.contentSize)
