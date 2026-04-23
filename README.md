@@ -3,7 +3,7 @@
     <h1>Thaw</h1>
 </div>
 
-Thaw is a powerful menu bar management tool. While its primary function is hiding and showing menu bar items, it aims to cover a wide variety of additional features to make it one of the most versatile menu bar tools available.
+Thaw is a powerful menu bar management tool for macOS 26. While its primary function is hiding and showing menu bar items, it aims to cover a wide variety of additional features to make it one of the most versatile menu bar tools available.
 
 ![thaw-banner](https://github.com/user-attachments/assets/9584065d-f840-4545-9a42-cfc5534b5ac3)
 
@@ -199,10 +199,6 @@ Help translate Thaw via [Crowdin](https://crowdin.com/project/thaw)
 - [ ] Menu bar widgets
 
 </details>
-
-## Why does Thaw only support macOS 14 and later?
-
-Thaw uses a number of system APIs that are available starting in macOS 14. As such, there are no plans to support earlier versions of macOS.
 
 ## Gallery
 
