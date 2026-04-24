@@ -74,7 +74,7 @@ struct AutomationSettingsPane: View {
 
             Spacer()
 
-            Text(String(format: NSLocalizedString("whitelisted_apps_count", comment: "Shows the number of whitelisted apps"), settings.whitelistedApps.count))
+            Text(String(localized: "apps \(settings.whitelistedApps.count)", comment: "Shows the number of whitelisted apps"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
