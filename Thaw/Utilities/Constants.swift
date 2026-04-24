@@ -36,8 +36,9 @@ enum Constants {
     static let menuBarBrightnessThreshold: CGFloat = 0.67
 
     /// The brightness threshold for notched displays.
-    /// Lower value means items turn black earlier (more aggressive dark text).
-    static let notchedDisplayBrightnessThreshold: CGFloat = 0.5
+    /// Matches the non-notched threshold to avoid biasing toward dark text on
+    /// notched displays where the black notch area lowers the sampled average.
+    static let notchedDisplayBrightnessThreshold: CGFloat = 0.67
 
     // MARK: - App URLs (from Info.plist)
 
