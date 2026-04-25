@@ -38854,7 +38854,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aplikace na seznamu povolených mohou číst nastavení, přepínat logické volby, nastavovat číselné hodnoty (časovače, zpoždění), měnit nastavení výběrových typů (strategie opětovného skrytí, umístění lišty Thaw) a upravovat konfigurace jednotlivých displejů. Patří sem automatické opětovné skrytí, zobrazení při kliknutí/najetí myší/rolování/dvojitém kliknutí, řádek Thaw, skrytí nabídek aplikací, povolení sekce „vždy skryté“, zobrazení popisků a diagnostické protokolování."
+            "value" : "Aplikace na seznamu povolených mohou číst nastavení, přepínat logické volby, nastavovat číselné hodnoty (časovače, zpoždění), měnit nastavení výběrových typů (metodu opětovného skrytí, umístění lišty Thaw) a upravovat konfigurace jednotlivých displejů. Patří sem automatické opětovné skrytí, zobrazení při kliknutí/najetí myší/rolování/dvojitém kliknutí, řádek Thaw, skrytí nabídek aplikací, povolení sekce „vždy skryté“, zobrazení popisků a diagnostické protokolování."
           }
         },
         "de" : {
