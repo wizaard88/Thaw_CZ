@@ -7,7 +7,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "„%1$@“ (%2$@) žádá o povolení ovládat nastavení aplikace Thaw prostřednictvím URL schématu.\n\nPokud bude povoleno, bude tato aplikace moci:\n• Číst aktuální nastavení a konfigurace\n• Přepínat logické volby\n• Upravovat číselné hodnoty (časovače, zpoždění, intervaly)\n• Měnit nastavení výběrových typů (způsoby opětovného skrytí, umístění lišty Thaw)\n• Upravovat konfigurace pro jednotlivé obrazovky\n\nToto oprávnění zůstává platné, dokud aplikaci ručně neodstraníte v Nastavení → Automatizace.%3$@"
+            "value" : "„%1$@“ (%2$@) žádá o povolení ovládat nastavení aplikace Thaw prostřednictvím URL schématu.\n\nPokud bude povoleno, bude tato aplikace moci:\n• Číst aktuální nastavení a konfigurace\n• Přepínat logické volby\n• Upravovat číselné hodnoty (časovače, zpoždění, intervaly)\n• Měnit nastavení výběrových typů (způsoby opětovného skrytí, umístění lišty Thaw)\n• Upravovat konfigurace pro jednotlivé obrazovky\n\nToto oprávnění zůstává platné, dokud aplikaci ručně neodstraníte v nastavení Thaw → Automatizace.%3$@"
           }
         },
         "de" : {
@@ -19457,7 +19457,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Nemazat po vyhledání"
+            "value" : "Nemazat vyhledávací pole"
           }
         },
         "de" : {
