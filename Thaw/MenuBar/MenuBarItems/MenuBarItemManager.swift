@@ -794,16 +794,50 @@ final class MenuBarItemManager: ObservableObject {
         startupSettlingTask = Task { @MainActor [weak self] in
             guard let self else { return }
             await self.initialCacheTask?.value
-            do {
-                if deadline > .now {
-                    try await Task.sleep(until: deadline, clock: .continuous)
+
+            // --- Hybrid signal + timer settling ---
+            // Instead of blindly waiting for a fixed timer, we poll until
+            // sourcePIDs have resolved (≤1 nil, which is normal for Control
+            // Center's own container). This prevents the fast-restore from
+            // running with wrong-namespace tags that cause a relocation
+            // cascade. The original deadline plus a 5-second grace period
+            // is the hard upper bound.
+            let maxDeadline = deadline.advanced(by: .seconds(5))
+            var pidsResolved = false
+
+            while !Task.isCancelled {
+                if ContinuousClock.now > maxDeadline {
+                    MenuBarItemManager.diagLog.debug(
+                        "performSetup: settling hit max deadline (\(maxDeadline)), ending with fallback"
+                    )
+                    break
                 }
-            } catch {
-                // Cancelled by a subsequent performSetup() call; exit without
-                // touching shared state — the new call manages isInStartupSettling.
-                MenuBarItemManager.diagLog.debug("performSetup: startup settling task cancelled")
+
+                await cacheItemsRegardless(skipRecentMoveCheck: true, resolveSourcePID: true)
+                let unresolved = itemCache.managedItems.filter { $0.sourcePID == nil }.count
+                if unresolved <= 1 {
+                    MenuBarItemManager.diagLog.debug(
+                        "performSetup: sourcePIDs resolved (\(unresolved) nil), ending settling early"
+                    )
+                    pidsResolved = true
+                    break
+                }
+
+                // Short sleep before next poll; exit immediately if cancelled.
+                do {
+                    try await Task.sleep(for: .milliseconds(500), tolerance: .milliseconds(100))
+                } catch is CancellationError {
+                    MenuBarItemManager.diagLog.debug("performSetup: startup settling task cancelled")
+                    return
+                } catch {
+                    return
+                }
+            }
+
+            guard !Task.isCancelled else {
                 return
             }
+
             isInStartupSettling = false
             settlingDeadline = nil
             MenuBarItemManager.diagLog.debug(
