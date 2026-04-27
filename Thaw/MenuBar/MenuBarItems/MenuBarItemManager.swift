@@ -1304,7 +1304,9 @@ extension MenuBarItemManager {
             isRestoringItemOrderTimestamp = nil
         }
 
-        if !isRestoringItemOrder, !isResettingLayout, !isInStartupSettling {
+        if !isRestoringItemOrder, !isResettingLayout, !isInStartupSettling,
+           temporarilyShownItemContexts.isEmpty
+        {
             saveSectionOrder(from: context.cache)
         }
         MenuBarItemManager.diagLog.debug("Updated menu bar item cache: visible=\(context.cache[.visible].count), hidden=\(context.cache[.hidden].count), alwaysHidden=\(context.cache[.alwaysHidden].count)")
@@ -1366,6 +1368,20 @@ extension MenuBarItemManager {
             }
 
             MenuBarItemManager.diagLog.debug("cacheItemsRegardless: getMenuBarItems returned \(items.count) items")
+
+            // When sourcePID resolution changes an item's identifier (e.g. from
+            // com.apple.controlcenter:Item-0:4 to pl.maketheweb.cleanshotx:Item-0),
+            // the new identifier won't be in knownItemIdentifiers. Seed it now so
+            // the item isn't treated as a "new" item by relocateNewLeftmostItems.
+            if !previousWindowIDs.isEmpty {
+                for item in items where previousWindowIDs.contains(item.windowID) {
+                    let identifier = "\(item.tag.namespace):\(item.tag.title)"
+                    if !knownItemIdentifiers.contains(identifier) {
+                        knownItemIdentifiers.insert(identifier)
+                    }
+                }
+                persistKnownItemIdentifiers()
+            }
 
             guard !Task.isCancelled else {
                 MenuBarItemManager.diagLog.debug("cacheItemsRegardless: cancelled after getMenuBarItems")
@@ -3829,7 +3845,14 @@ extension MenuBarItemManager {
             // window ID (app quit and relaunched). Items with saved sections
             // are already filtered out above, so this only affects items that
             // macOS placed in the hidden zone after an app relaunch.
+            //
+            // When isNewIdentity=true but isNewID=false, the item's identifier
+            // changed (e.g. sourcePID resolution) but the window existed before.
+            // This is an identifier migration, not a genuinely new item.
             let isNewID = previousIDs.isEmpty ? isNewIdentity : !previousIDs.contains(item.windowID)
+            if isNewIdentity && !isNewID {
+                return false
+            }
             return notPlacedHidden && (isNewIdentity || isNewID)
         }
         guard let candidate else {
