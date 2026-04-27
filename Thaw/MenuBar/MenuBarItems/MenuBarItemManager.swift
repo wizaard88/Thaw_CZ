@@ -1122,7 +1122,6 @@ extension MenuBarItemManager {
 
         var cache: ItemCache
         var temporarilyShownItems = [(MenuBarItem, MoveDestination)]()
-        var shouldClearCachedItemWindowIDs = false
         var relocatedItems = [MenuBarItem]()
 
         private(set) lazy var hiddenControlItemBounds = bestBounds(for: controlItems.hidden)
@@ -1242,8 +1241,8 @@ extension MenuBarItemManager {
             }
 
             noSectionCount += 1
-            MenuBarItemManager.diagLog.warning("Couldn't find section for caching \(item.logString) bounds=\(NSStringFromRect(item.bounds))")
-            context.shouldClearCachedItemWindowIDs = true
+            MenuBarItemManager.diagLog.warning("Couldn't find section for caching \(item.logString) bounds=\(NSStringFromRect(item.bounds)), assigning to hidden")
+            context.cache[.hidden].append(item)
         }
 
         // Count invalid items
@@ -1255,11 +1254,6 @@ extension MenuBarItemManager {
 
         for (item, destination) in context.temporarilyShownItems {
             context.cache.insert(item, at: destination)
-        }
-
-        if context.shouldClearCachedItemWindowIDs {
-            MenuBarItemManager.diagLog.info("Clearing cached menu bar item windowIDs")
-            await cacheActor.clearCachedItemWindowIDs() // Ensure next cache isn't skipped.
         }
 
         guard itemCache != context.cache else {
