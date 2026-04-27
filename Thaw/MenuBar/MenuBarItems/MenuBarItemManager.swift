@@ -362,7 +362,7 @@ final class MenuBarItemManager: ObservableObject {
         for section in MenuBarSection.Name.allCases {
             // Start with current identifiers for this section (only primary items)
             var identifiers = cache[section]
-                .filter { !$0.isControlItem && $0.tag.instanceIndex == 0 }
+                .filter { !$0.isControlItem && $0.tag.instanceIndex == 0 && $0.sourcePID != nil }
                 .map(\.uniqueIdentifier)
 
             // Add identifiers from saved sections that are NOT currently in the cache
@@ -803,7 +803,6 @@ final class MenuBarItemManager: ObservableObject {
             // cascade. The original deadline plus a 5-second grace period
             // is the hard upper bound.
             let maxDeadline = deadline.advanced(by: .seconds(5))
-            var pidsResolved = false
 
             while !Task.isCancelled {
                 if ContinuousClock.now > maxDeadline {
@@ -814,12 +813,12 @@ final class MenuBarItemManager: ObservableObject {
                 }
 
                 await cacheItemsRegardless(skipRecentMoveCheck: true, resolveSourcePID: true)
+                let managedCount = itemCache.managedItems.count
                 let unresolved = itemCache.managedItems.filter { $0.sourcePID == nil }.count
-                if unresolved <= 1 {
+                if managedCount > 0 && unresolved <= 1 {
                     MenuBarItemManager.diagLog.debug(
-                        "performSetup: sourcePIDs resolved (\(unresolved) nil), ending settling early"
+                        "performSetup: sourcePIDs resolved (\(unresolved) nil, \(managedCount) items), ending settling early"
                     )
-                    pidsResolved = true
                     break
                 }
 
