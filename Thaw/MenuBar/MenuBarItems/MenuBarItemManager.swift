@@ -3635,6 +3635,23 @@ extension MenuBarItemManager {
             return false
         }
 
+        // During startup settling, the first cache pass may have items tagged
+        // with wrong namespaces (e.g. com.apple.controlcenter when sourcePID
+        // hasn't resolved yet). Using those wrong tags to build hiddenTags /
+        // alwaysHiddenTags causes ALL items to appear as "new" on the next
+        // pass with correct sourcePIDs, triggering a destructive relocation
+        // cascade that moves every hidden/always-hidden item to visible.
+        // Seed identifiers and skip relocation; the settling-end restore pass
+        // will handle correct placement.
+        if isInStartupSettling {
+            let identifiers = items
+                .filter { !$0.isControlItem }
+                .map { "\($0.tag.namespace):\($0.tag.title)" }
+            knownItemIdentifiers.formUnion(identifiers)
+            persistKnownItemIdentifiers()
+            return false
+        }
+
         // Avoid relocating items already assigned to hidden/always-hidden sections.
         let hiddenTags = Set(itemCache[.hidden].map(\.tag))
         let alwaysHiddenTags = Set(itemCache[.alwaysHidden].map(\.tag))
