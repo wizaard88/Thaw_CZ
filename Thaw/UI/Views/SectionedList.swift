@@ -70,25 +70,19 @@ struct SectionedList<ItemID: Hashable>: View {
         }
         .scrollIndicatorsFlash(trigger: scrollIndicatorsFlashTrigger)
         .onKeyDown(key: .downArrow, isEnabled: selection != nil && !isEditing) {
-            DispatchQueue.main.async {
-                if let nextSelectableItem {
-                    selection = nextSelectableItem.id
-                }
+            if let nextSelectableItem {
+                selection = nextSelectableItem.id
             }
             return .handled
         }
         .onKeyDown(key: .upArrow, isEnabled: selection != nil && !isEditing) {
-            DispatchQueue.main.async {
-                if let previousSelectableItem {
-                    selection = previousSelectableItem.id
-                }
+            if let previousSelectableItem {
+                selection = previousSelectableItem.id
             }
             return .handled
         }
         .onKeyDown(key: .returnKey, isEnabled: selection != nil && !isEditing) {
-            DispatchQueue.main.async {
-                items.first { $0.id == selection }?.action?()
-            }
+            items.first { $0.id == selection }?.action?()
             return .handled
         }
         .task {

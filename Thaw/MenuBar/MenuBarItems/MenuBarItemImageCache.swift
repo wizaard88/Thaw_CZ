@@ -10,7 +10,7 @@ import Cocoa
 import Combine
 
 /// Cache for menu bar item images.
-final class MenuBarItemImageCache: ObservableObject {
+final class MenuBarItemImageCache: ObservableObject, @unchecked Sendable {
     private static nonisolated let diagLog = DiagLog(category: "MenuBarItemImageCache")
     /// A representation of a captured menu bar item image.
     struct CapturedImage: Hashable {
@@ -188,7 +188,7 @@ final class MenuBarItemImageCache: ObservableObject {
 
                 let tagString = "\(tag.namespace):\(tag.title)"
                 return (tagString, pngData)
-            }.compactMap { $0 }
+            }.compactMap(\.self)
 
             guard cacheData.count == snapshot.count else { return }
 
@@ -957,7 +957,7 @@ final class MenuBarItemImageCache: ObservableObject {
         let now = Date()
         let existing = failedCaptures[item.tag]
 
-        if let existing = existing {
+        if let existing {
             let newCount = existing.failureCount + 1
             failedCaptures[item.tag] = FailedCapture(
                 tag: item.tag,
@@ -1023,11 +1023,10 @@ final class MenuBarItemImageCache: ObservableObject {
         count: Int,
         excluding excludedTags: Set<MenuBarItemTag> = []
     ) -> [MenuBarItemTag] {
-        let candidates: [(tag: MenuBarItemTag, timestamp: UInt64)]
-        if excludedTags.isEmpty {
-            candidates = images.keys.map { ($0, accessTimestamps[$0] ?? 0) }
+        let candidates: [(tag: MenuBarItemTag, timestamp: UInt64)] = if excludedTags.isEmpty {
+            images.keys.map { ($0, accessTimestamps[$0] ?? 0) }
         } else {
-            candidates = images.keys
+            images.keys
                 .filter { !excludedTags.contains($0) }
                 .map { ($0, accessTimestamps[$0] ?? 0) }
         }
@@ -1145,9 +1144,9 @@ final class MenuBarItemImageCache: ObservableObject {
         let maxSize = Self.maxCacheSize
         let usagePercent = (imageSize * 100) / maxSize
         let failedCount = failedCaptures.count
-        let blacklistedCount = failedCaptures.values.filter {
+        let blacklistedCount = failedCaptures.values.count(where: {
             $0.failureCount >= Self.maxFailuresBeforeBlacklist
-        }.count
+        })
 
         let lruSorted = accessTimestamps.sorted { $0.value < $1.value }
         let lruDescription = lruSorted.map { "\($0.key)" }.joined(separator: ", ")
@@ -1169,19 +1168,20 @@ final class MenuBarItemImageCache: ObservableObject {
 
     /// Updates the cache for the given sections, without checking whether
     /// caching is necessary.
+    @MainActor
     func updateCacheWithoutChecks(sections: [MenuBarSection.Name]) async {
         guard let appState else {
             MenuBarItemImageCache.diagLog.warning("updateCacheWithoutChecks: appState is nil, aborting")
             return
         }
 
-        let hasScreenRecording = await appState.hasPermission(.screenRecording)
+        let hasScreenRecording = appState.hasPermission(.screenRecording)
         guard hasScreenRecording else {
             MenuBarItemImageCache.diagLog.debug("updateCacheWithoutChecks: no screen recording permission, aborting")
             return
         }
 
-        guard let displayID = await appState.itemManager.itemCache.displayID else {
+        guard let displayID = appState.itemManager.itemCache.displayID else {
             MenuBarItemImageCache.diagLog.warning("updateCacheWithoutChecks: itemCache.displayID is nil, aborting")
             return
         }
@@ -1202,7 +1202,7 @@ final class MenuBarItemImageCache: ObservableObject {
                 return
             }
 
-            guard await !appState.itemManager.itemCache[section].isEmpty else {
+            guard !appState.itemManager.itemCache[section].isEmpty else {
                 continue
             }
 
@@ -1231,7 +1231,7 @@ final class MenuBarItemImageCache: ObservableObject {
         }
 
         // Get the set of valid item tags from all sections to clean up stale entries
-        let allValidTags = await Set(
+        let allValidTags = Set(
             appState.itemManager.itemCache.managedItems.map(\.tag)
         )
 
@@ -1340,11 +1340,10 @@ final class MenuBarItemImageCache: ObservableObject {
         }
 
         // Use provided snapshot or construct one in a single MainActor hop
-        let navSnapshot: NavigationStateSnapshot
-        if let nav {
-            navSnapshot = nav
+        let navSnapshot: NavigationStateSnapshot = if let nav {
+            nav
         } else {
-            navSnapshot = await MainActor.run {
+            await MainActor.run {
                 makeNavigationStateSnapshot()
             }
         }
@@ -1384,17 +1383,17 @@ final class MenuBarItemImageCache: ObservableObject {
     }
 
     /// Updates the cache for all sections, if necessary.
+    @MainActor
     func updateCache(nav: NavigationStateSnapshot? = nil) async {
         guard let appState else {
             return
         }
 
         // Use provided snapshot or construct one in a single MainActor hop
-        let navSnapshot: NavigationStateSnapshot
-        if let nav {
-            navSnapshot = nav
+        let navSnapshot: NavigationStateSnapshot = if let nav {
+            nav
         } else {
-            navSnapshot = await MainActor.run {
+            await MainActor.run {
                 makeNavigationStateSnapshot()
             }
         }
@@ -1403,7 +1402,7 @@ final class MenuBarItemImageCache: ObservableObject {
 
         if navSnapshot.isSettingsPresented || navSnapshot.isSearchPresented {
             sectionsNeedingDisplay = MenuBarSection.Name.allCases
-        } else if navSnapshot.isIceBarPresented, let section = await appState.menuBarManager.iceBarPanel
+        } else if navSnapshot.isIceBarPresented, let section = appState.menuBarManager.iceBarPanel
             .currentSection
         {
             sectionsNeedingDisplay.append(section)

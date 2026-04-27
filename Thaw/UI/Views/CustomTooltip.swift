@@ -133,7 +133,7 @@ final class CustomTooltipPanel: NSPanel {
 ///
 /// Each `NSView` that wants custom-delayed tooltips should own an
 /// instance of this controller.
-final class CustomTooltipController {
+final class CustomTooltipController: @unchecked Sendable {
     private var timer: Timer?
     private weak var view: NSView?
 
@@ -149,29 +149,31 @@ final class CustomTooltipController {
     }
 
     deinit {
-        cancel()
+        timer?.invalidate()
     }
 
-    /// Schedules the tooltip to appear after `delay` seconds.
-    /// If `delay` is 0, the tooltip is shown immediately.
+    @MainActor
     func scheduleShow(delay: TimeInterval) {
         cancel()
         if delay <= 0 {
             showNow()
         } else {
             timer = Timer.scheduledTimer(withTimeInterval: delay, repeats: false) { [weak self] _ in
-                self?.showNow()
+                Task { @MainActor in
+                    self?.showNow()
+                }
             }
         }
     }
 
-    /// Hides the tooltip and cancels any pending show timer.
+    @MainActor
     func cancel() {
         timer?.invalidate()
         timer = nil
         CustomTooltipPanel.shared.dismiss(owner: id)
     }
 
+    @MainActor
     private func showNow() {
         guard let view, let window = view.window else { return }
 

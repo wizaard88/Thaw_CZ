@@ -472,7 +472,7 @@ extension MigrationManager {
 // MARK: - MigrationError
 
 extension MigrationManager {
-    enum MigrationError: Error, CustomStringConvertible {
+    enum MigrationError: Error, CustomStringConvertible, @unchecked Sendable {
         case invalidMenuBarSectionsJSONObject(Any)
         case hotkeyMigrationError(any Error)
         case controlItemMigrationError(any Error)

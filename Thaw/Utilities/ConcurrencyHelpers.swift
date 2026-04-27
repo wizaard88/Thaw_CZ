@@ -20,30 +20,14 @@ struct TaskTimeoutError: CustomStringConvertible, LocalizedError {
 }
 
 extension Task {
-    /// Runs the given throwing operation asynchronously alongside a
-    /// timeout operation in a structured task group.
-    ///
-    /// If the operation does not complete within the provided
-    /// duration, the timeout operation cancels the group and throws
-    /// a ``TaskTimeoutError``.
-    ///
-    /// - Parameters:
-    ///   - timeout: The duration the operation must complete within.
-    ///   - tolerance: The precision threshold of the timeout operation.
-    ///   - clock: The clock that manages the timeout operation.
-    ///   - operation: The operation to perform.
-    ///
-    /// - Returns: The result of the operation, if successful.
     static func withTimeout<C: Clock>(
         _ timeout: C.Instant.Duration,
         tolerance: C.Instant.Duration? = nil,
         clock: C = .continuous,
-        operation: sending @escaping @isolated(any) () async throws -> Success
+        operation: @escaping @Sendable () async throws -> Success
     ) async throws -> Success {
         try await withThrowingTaskGroup(of: Success.self) { group in
-            group.addTask {
-                try await operation()
-            }
+            group.addTask { try await operation() }
             group.addTask {
                 try await _Concurrency.Task.sleep(for: timeout, tolerance: tolerance, clock: clock)
                 throw TaskTimeoutError()
@@ -79,7 +63,7 @@ extension Task where Failure == any Error {
         name: String? = nil,
         priority: TaskPriority? = nil,
         @_inheritActorContext @_implicitSelfCapture
-        operation: sending @escaping @isolated(any) () async throws -> Success
+        operation: @escaping @Sendable () async throws -> Success
     ) {
         self.init(name: name, priority: priority) {
             try await Task.withTimeout(timeout, tolerance: tolerance, clock: clock, operation: operation)
@@ -108,7 +92,7 @@ extension Task where Failure == any Error {
         clock: C = .continuous,
         name: String? = nil,
         priority: TaskPriority? = nil,
-        operation: sending @escaping @isolated(any) () async throws -> Success
+        operation: @escaping @Sendable () async throws -> Success
     ) -> Task<Success, Failure> {
         detached(name: name, priority: priority) {
             try await withTimeout(timeout, tolerance: tolerance, clock: clock, operation: operation)

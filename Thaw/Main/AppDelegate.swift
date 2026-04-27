@@ -383,8 +383,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // This ensures clicking app icon, dock icon or menu bar item works correctly
         appState.diagLog.debug("Opening settings window from app icon/dock/menu click")
 
-        // Delay makes this more reliable for some reason.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [appState] in
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(100))
             appState.activate(withPolicy: .regular)
             appState.openWindow(.settings)
         }

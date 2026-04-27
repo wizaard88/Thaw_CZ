@@ -491,7 +491,7 @@ final class ControlItem {
 
     /// Calculates how many spacer items are needed to push hidden items off ultra-wide displays.
     private func requiredSpacerCount() -> Int {
-        let maxScreenWidth = NSScreen.screens.map { $0.frame.width }.max() ?? 6000
+        let maxScreenWidth = NSScreen.screens.map(\.frame.width).max() ?? 6000
         guard maxScreenWidth > 5120 else { return 0 }
 
         let desiredWidth = maxScreenWidth * 3
@@ -824,7 +824,7 @@ enum ControlItemDefaults {
 
     /// Migrates the given control item defaults key from an old
     /// autosave name to a new autosave name.
-    static func migrate<Value>(key: Key<Value>, from oldAutosaveName: String, to newAutosaveName: String) {
+    static func migrate(key: Key<some Any>, from oldAutosaveName: String, to newAutosaveName: String) {
         guard newAutosaveName != oldAutosaveName else {
             return
         }

@@ -7,6 +7,7 @@
 //  Licensed under the GNU GPLv3
 
 import Cocoa
+import os.lock
 
 /// A structural representation of a menu bar item.
 struct MenuBarItem: CustomStringConvertible {
@@ -86,7 +87,7 @@ struct MenuBarItem: CustomStringConvertible {
         ///
         /// Ignores cases where a single lowercase letter immediately
         /// precedes an uppercase letter (i.e. "WiFi").
-        func toTitleCase<S: StringProtocol>(_ s: S) -> String {
+        func toTitleCase(_ s: some StringProtocol) -> String {
             String(s).replacing(/([a-z]{2})([A-Z])/) { $0.output.1 + " " + $0.output.2 }
         }
 
@@ -176,7 +177,7 @@ struct MenuBarItem: CustomStringConvertible {
         }
         set {
             var names = Defaults.dictionary(forKey: .menuBarItemCustomNames) as? [String: String] ?? [:]
-            if let newValue = newValue, !newValue.trimmingCharacters(in: .whitespaces).isEmpty {
+            if let newValue, !newValue.trimmingCharacters(in: .whitespaces).isEmpty {
                 names[uniqueIdentifier] = newValue
             } else {
                 names.removeValue(forKey: uniqueIdentifier)
@@ -341,7 +342,7 @@ extension MenuBarItem {
         }
 
         assignStableInstanceIndices(to: &items, using: windows)
-        let nilPIDCount = items.filter { $0.sourcePID == nil }.count
+        let nilPIDCount = items.count(where: { $0.sourcePID == nil })
         diagLog.debug(
             "getMenuBarItemsExperimental: created \(items.count) items without sourcePID resolution, \(nilPIDCount) unresolved"
         )
@@ -372,12 +373,12 @@ extension MenuBarItem {
                         if window.owningApplication?.bundleIdentifier == ccBundleID ||
                             window.ownerPID == ProcessInfo.processInfo.processIdentifier
                         {
-                            return (index, await MenuBarItem(uncheckedItemWindow: window, sourcePID: ProcessInfo.processInfo.processIdentifier))
+                            return await (index, MenuBarItem(uncheckedItemWindow: window, sourcePID: ProcessInfo.processInfo.processIdentifier))
                         }
                     }
 
                     let sourcePID = await MenuBarItemService.Connection.shared.sourcePID(for: window)
-                    return (index, await MenuBarItem(uncheckedItemWindow: window, sourcePID: sourcePID))
+                    return await (index, MenuBarItem(uncheckedItemWindow: window, sourcePID: sourcePID))
                 }
             }
 
@@ -386,7 +387,7 @@ extension MenuBarItem {
                 indexedItems.append(result)
             }
 
-            return indexedItems.sorted(by: { $0.0 < $1.0 }).map { $0.1 }
+            return indexedItems.sorted(by: { $0.0 < $1.0 }).map(\.1)
         }
 
         // Post-resolution pass: fix up items with nil sourcePID.
@@ -554,13 +555,11 @@ private extension MenuBarItemTag {
 // MARK: - MenuBarItemTag.Namespace Helper
 
 extension MenuBarItemTag.Namespace {
-    private static var uuidCache = [CGWindowID: UUID]()
+    private static let uuidCache = OSAllocatedUnfairLock<[CGWindowID: UUID]>(initialState: [:])
 
-    /// Prunes the UUID cache, keeping only the entries for the given
-    /// valid window identifiers.
     @MainActor
     static func pruneUUIDCache(keeping validWindowIDs: Set<CGWindowID>) {
-        uuidCache = uuidCache.filter { validWindowIDs.contains($0.key) }
+        uuidCache.withLock { $0 = $0.filter { validWindowIDs.contains($0.key) } }
     }
 
     /// Creates a namespace without checks.
@@ -615,11 +614,11 @@ extension MenuBarItemTag.Namespace {
         } else if let ownerName = itemWindow.ownerName {
             // Last resort: use the process name as a stable identifier.
             self = .string(ownerName)
-        } else if let uuid = Self.uuidCache[itemWindow.windowID] {
+        } else if let uuid = Self.uuidCache.withLock({ $0[itemWindow.windowID] }) {
             self = .uuid(uuid)
         } else {
             let uuid = UUID()
-            Self.uuidCache[itemWindow.windowID] = uuid
+            Self.uuidCache.withLock { $0[itemWindow.windowID] = uuid }
             self = .uuid(uuid)
         }
     }

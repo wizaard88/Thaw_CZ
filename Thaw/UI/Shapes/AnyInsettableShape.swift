@@ -13,7 +13,7 @@ struct AnyInsettableShape: InsettableShape {
     private let base: any InsettableShape
 
     /// Creates a type-erased insettable shape.
-    init<S: InsettableShape>(_ shape: S) {
+    init(_ shape: some InsettableShape) {
         self.base = shape
     }
 

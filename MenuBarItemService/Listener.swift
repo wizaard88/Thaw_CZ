@@ -9,7 +9,7 @@
 import XPC
 
 /// A wrapper around an XPC listener object.
-final class Listener {
+final class Listener: @unchecked Sendable {
     private let diagLog = DiagLog(category: "Listener")
     /// The shared listener.
     static let shared = Listener()
@@ -53,9 +53,9 @@ final class Listener {
     /// with the requirement that session peers must be signed with the
     /// same team identifier as the service process.
     private func uncheckedActivateWithSameTeamRequirement() throws {
-        xpcListener = try XPCListener(service: name, requirement: .isFromSameTeam()) { [weak self] request in
-            request.accept { message in
-                self?.handleMessage(message)
+        xpcListener = try XPCListener(service: name, requirement: .isFromSameTeam()) { request in
+            request.accept { [self] message in
+                self.handleMessage(message)
             }
         }
     }

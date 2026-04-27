@@ -71,7 +71,7 @@ enum SystemAppearance {
         return .light
     }
 
-    /// The current system appearance.
+    @MainActor
     static var current: SystemAppearance {
         systemAppearance(for: NSApp.effectiveAppearance)
     }

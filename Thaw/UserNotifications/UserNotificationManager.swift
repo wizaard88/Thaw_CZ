@@ -54,7 +54,7 @@ final class UserNotificationManager: NSObject {
 
     /// Removes the notifications from Notification Center that match the given identifiers.
     func removeDeliveredNotifications(with identifiers: [UserNotificationIdentifier]) {
-        notificationCenter.removeDeliveredNotifications(withIdentifiers: identifiers.map { $0.rawValue })
+        notificationCenter.removeDeliveredNotifications(withIdentifiers: identifiers.map(\.rawValue))
     }
 }
 

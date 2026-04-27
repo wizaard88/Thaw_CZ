@@ -475,7 +475,7 @@ final class MenuBarSection {
             rehideMonitor = EventMonitor.universal(for: .mouseMoved) { [weak self, weak appState] event in
                 // Throttle: process at most ~20fps regardless of mouse polling rate.
                 enum Context {
-                    static var lastTime: TimeInterval = 0
+                    static nonisolated(unsafe) var lastTime: TimeInterval = 0
                 }
                 let now = CACurrentMediaTime()
                 guard now - Context.lastTime > 0.05 else { return event }

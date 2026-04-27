@@ -126,7 +126,7 @@ enum SettingsURIHandler {
     /// Verifies that an app's current code signature matches the stored signing identity.
     private static func verifyCodeSignature(bundleId: String, storedTeamId: String?) -> Bool {
         // If no stored team ID, only allow if app is also unsigned (legacy entries)
-        guard let storedTeamId = storedTeamId else {
+        guard let storedTeamId else {
             let currentTeamId = getTeamIdentifier(for: bundleId)
             return currentTeamId == nil
         }
@@ -190,7 +190,7 @@ enum SettingsURIHandler {
 
         // Build informative text with signing status
         var signingInfo = ""
-        if let teamId = teamId {
+        if let teamId {
             signingInfo = "\n\nSigned by: \(teamId)"
         } else {
             signingInfo = "\n\n⚠️ Warning: This app is not code-signed."
@@ -570,7 +570,7 @@ enum SettingsURIHandler {
         // If specific display UUID provided, use that
         if let uuid = displayUUID, !uuid.isEmpty {
             // Validate UUID format
-            guard uuid.contains("-") && !uuid.isEmpty else {
+            guard uuid.contains("-"), !uuid.isEmpty else {
                 diagLog.warning("Settings URI: Invalid display UUID format '\(uuid)'")
                 return false
             }
@@ -664,10 +664,10 @@ enum SettingsURIHandler {
             "key": key,
             "scope": scope.rawValue,
         ]
-        if let value = value {
+        if let value {
             userInfo["value"] = value
         }
-        if let stringValue = stringValue {
+        if let stringValue {
             userInfo["stringValue"] = stringValue
         }
         if toggle {
@@ -737,14 +737,12 @@ enum SettingsURIHandler {
         }
 
         // Gather requested data
-        let response: [String: Any]
-
-        if let singleKey = key {
+        let response: [String: Any] = if let singleKey = key {
             // Single key request
-            response = handleSingleKeyGet(key: singleKey, displayUUID: displayUUID, requestId: responseId)
+            handleSingleKeyGet(key: singleKey, displayUUID: displayUUID, requestId: responseId)
         } else {
             // No key specified - error
-            response = createErrorResponse(requestId: responseId, error: "No key specified", details: "Provide key=<name>")
+            createErrorResponse(requestId: responseId, error: "No key specified", details: "Provide key=<name>")
         }
 
         // Send response
@@ -922,7 +920,7 @@ enum SettingsURIHandler {
             .flatMap { try? JSONDecoder().decode([String: DisplayIceBarConfiguration].self, from: $0) }
             ?? [:]
 
-        if let uuid = uuid {
+        if let uuid {
             // Check if UUID matches a connected display
             let connectedUUIDs = NSScreen.screens.compactMap { Bridging.getDisplayUUIDString(for: $0.displayID) }
             let isConnected = connectedUUIDs.contains(uuid)
@@ -1029,7 +1027,7 @@ enum SettingsURIHandler {
             "status": "error",
             "error": error,
         ]
-        if let details = details {
+        if let details {
             response["details"] = details
         }
         return response

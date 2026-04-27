@@ -63,7 +63,7 @@ struct SettingsView: View {
             get: { navigationState.settingsNavigationIdentifier },
             set: { newValue in
                 if navigationState.settingsNavigationIdentifier != newValue {
-                    DispatchQueue.main.async {
+                    Task { @MainActor in
                         navigationState.settingsNavigationIdentifier = newValue
                     }
                 }

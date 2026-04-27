@@ -6,7 +6,7 @@
 //  Copyright (Thaw) © 2026 Toni Förster
 //  Licensed under the GNU GPLv3
 
-import Sparkle
+@preconcurrency import Sparkle
 import SwiftUI
 
 /// Manager for app updates.

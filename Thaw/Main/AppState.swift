@@ -77,9 +77,7 @@ final class AppState: ObservableObject {
     /// Diagnostic logger for the app state.
     let diagLog = DiagLog(category: "AppState")
 
-    /// Async setup actions, run once on first access.
-    private lazy var setupTask = Task {
-        // Enable diagnostic logging early if the user had it enabled
+    private lazy var setupTask = Task { @MainActor in
         if Defaults.bool(forKey: .enableDiagnosticLogging) {
             DiagnosticLogger.shared.isEnabled = true
         }
@@ -160,10 +158,8 @@ final class AppState: ObservableObject {
         }
     }
 
-    /// Dismisses the window with the given identifier.
     func dismissWindow(_ id: IceWindowIdentifier) {
-        // Async prevents conflicts with SwiftUI.
-        DispatchQueue.main.async { [weak self] in
+        Task { @MainActor [weak self] in
             guard let self else { return }
             self.openWindows.remove(id)
             self.diagLog.debug("Dismissing window with id: \(id)")
@@ -401,16 +397,12 @@ final class AppState: ObservableObject {
             }
     }
 
-    /// Opens the window with the given identifier.
     func openWindow(_ id: IceWindowIdentifier) {
-        // Async prevents conflicts with SwiftUI.
-        DispatchQueue.main.async { [weak self] in
+        Task { @MainActor [weak self] in
             guard let self else { return }
 
-            // Check if window is already open to prevent recreation
             if self.openWindows.contains(id) {
                 self.diagLog.debug("Window \(id) already open, activating existing window")
-                // If window already exists, just activate it
                 self.activate(withPolicy: .regular)
                 return
             }
@@ -419,29 +411,24 @@ final class AppState: ObservableObject {
             self.diagLog.debug("Opening window with id: \(id)")
             EnvironmentValues().openWindow(id: id)
 
-            // Ensure activation after window opens
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                self.activate(withPolicy: .regular)
-            }
+            try? await Task.sleep(for: .milliseconds(100))
+            self.activate(withPolicy: .regular)
         }
     }
 
-    /// Activates the app and sets its activation policy.
     func activate(withPolicy policy: NSApplication.ActivationPolicy? = nil) {
         if let policy {
             NSApp.setActivationPolicy(policy)
         }
 
-        // Force activation and bring to front
         NSApp.activate(ignoringOtherApps: true)
 
-        // Also try through NSRunningApplication as fallback
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(50))
             guard let frontmost = NSWorkspace.shared.frontmostApplication else {
                 NSRunningApplication.current.activate()
                 return
             }
-
             NSRunningApplication.current.activate(from: frontmost)
         }
     }

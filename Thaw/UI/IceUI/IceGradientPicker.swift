@@ -176,9 +176,7 @@ private struct IceGradientPickerRoot: View {
             gradient.stops.append(.black(location: location))
         }
         if select, let index = gradient.stops.indices.last {
-            DispatchQueue.main.async {
-                self.selection = index
-            }
+            selection = index
         }
     }
 

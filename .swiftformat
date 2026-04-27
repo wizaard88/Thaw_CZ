@@ -1,7 +1,7 @@
 # This file is configured to match the project's SwiftLint rules.
 
 # --swift-version: Specify Swift version to enable all formatting features.
---swift-version 5.0
+--swift-version 6.0
 
 # --indent 4: Matches 'prefer_spaces_over_tabs' custom rule.
 --indent 4

@@ -49,8 +49,7 @@ final class MenuBarAppearanceEditorPanel: NSObject, NSPopoverDelegate {
         updateContentSize()
         popover?.show(relativeTo: anchorView.bounds, of: anchorView, preferredEdge: .maxY)
 
-        // Ensure the popover takes focus when shown.
-        DispatchQueue.main.async { [weak self] in
+        Task { @MainActor [weak self] in
             NSApp.activate(ignoringOtherApps: true)
             self?.popover?.contentViewController?.view.window?.makeKeyAndOrderFront(nil)
         }
@@ -164,7 +163,7 @@ private final class MenuBarAppearanceEditorHostingController: NSHostingControlle
 
         appState.appearanceManager.$configuration
             .sink { [weak self] _ in
-                DispatchQueue.main.async { [weak self] in
+                Task { @MainActor [weak self] in
                     self?.updatePreferredContentSize()
                 }
             }

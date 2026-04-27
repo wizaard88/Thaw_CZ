@@ -15,7 +15,7 @@ struct ProfileEntity: AppEntity {
         "Menu Bar Profile"
     }
 
-    static var defaultQuery = ProfileEntityQuery()
+    static nonisolated(unsafe) var defaultQuery = ProfileEntityQuery()
 
     var id: String
     var name: String
@@ -63,8 +63,8 @@ struct ProfileEntityQuery: EntityQuery {
 /// Focus Filter that applies a Thaw profile when a Focus mode activates.
 /// Appears in System Settings → Focus → [mode] → Focus Filters → Add "Thaw".
 struct ThawFocusFilter: SetFocusFilterIntent {
-    static var title: LocalizedStringResource = "Set Menu Bar Profile"
-    static var description: IntentDescription? = IntentDescription(
+    static nonisolated(unsafe) var title: LocalizedStringResource = "Set Menu Bar Profile"
+    static nonisolated(unsafe) var description: IntentDescription? = IntentDescription(
         "Apply a Thaw menu bar profile when this Focus activates.",
         categoryName: "Profiles"
     )

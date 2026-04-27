@@ -449,7 +449,7 @@ extension CGImage {
 
 // MARK: - Collection where Element == MenuBarItem
 
-extension Collection where Element == MenuBarItem {
+extension Collection<MenuBarItem> {
     /// Returns the first index where the menu bar item matching the specified
     /// tag appears in the collection.
     func firstIndex(matching tag: MenuBarItemTag) -> Index? {
@@ -638,11 +638,9 @@ extension NSScreen {
         )
     }
 
-    /// Per-display cache of the last known application menu frame.
-    private static var applicationMenuFrameCache = [CGDirectDisplayID: CGRect]()
+    private static nonisolated(unsafe) var applicationMenuFrameCache = [CGDirectDisplayID: CGRect]()
 
-    /// The pid of the frontmost application when the cache was last populated.
-    private static var applicationMenuFrameCachePID: pid_t?
+    private static nonisolated(unsafe) var applicationMenuFrameCachePID: pid_t?
 
     /// Invalidates the cached application menu frame when the frontmost app changes.
     private static func invalidateApplicationMenuFrameCacheIfNeeded() {
@@ -653,8 +651,7 @@ extension NSScreen {
         }
     }
 
-    /// Per-display cache of the last known menu bar height.
-    private static var menuBarHeightCache = [CGDirectDisplayID: CGFloat]()
+    private static nonisolated(unsafe) var menuBarHeightCache = [CGDirectDisplayID: CGFloat]()
 
     /// Invalidates the cached menu bar heights.
     static func invalidateMenuBarHeightCache() {
@@ -664,7 +661,7 @@ extension NSScreen {
     /// Removes cache entries for displays that are no longer connected.
     /// This prevents memory growth when displays are reconnected (which assigns new display IDs).
     static func cleanupDisconnectedDisplayCaches() {
-        let connectedDisplayIDs = Set(NSScreen.screens.map { $0.displayID })
+        let connectedDisplayIDs = Set(NSScreen.screens.map(\.displayID))
         menuBarHeightCache = menuBarHeightCache.filter { connectedDisplayIDs.contains($0.key) }
         applicationMenuFrameCache = applicationMenuFrameCache.filter { connectedDisplayIDs.contains($0.key) }
     }
@@ -791,7 +788,7 @@ extension NSScreen {
 // MARK: - NSStatusItem
 
 extension NSStatusItem {
-    /// Shows the given menu under the status item.
+    @MainActor
     func showMenu(_ menu: NSMenu) {
         let originalMenu = self.menu
         defer {
@@ -839,7 +836,7 @@ extension Publisher {
 
     /// Publishes only non-`nil` elements.
     func removeNil<T>() -> Publishers.CompactMap<Self, T> where Output == T? {
-        compactMap { $0 }
+        compactMap(\.self)
     }
 
     /// Publishes only elements that don't match the previous element.
@@ -901,9 +898,9 @@ extension Publisher where Output: Equatable, Failure == Never {
     ///   - key: The Defaults key to persist to.
     ///   - transform: A closure that transforms the output before persisting.
     ///   - cancellables: The set to store the subscription in.
-    func persistToDefaults<T>(
+    func persistToDefaults(
         key: Defaults.Key,
-        transform: @escaping (Output) -> T,
+        transform: @escaping (Output) -> some Any,
         in cancellables: inout Set<AnyCancellable>
     ) {
         self.removeDuplicates()
@@ -958,7 +955,7 @@ extension RangeReplaceableCollection where Element == MenuBarItem {
 
 // MARK: - Sequence where Element == MenuBarItem
 
-extension Sequence where Element == MenuBarItem {
+extension Sequence<MenuBarItem> {
     /// Returns the first menu bar item that matches the specified tag.
     func first(matching tag: MenuBarItemTag) -> MenuBarItem? {
         first { $0.tag == tag }
@@ -977,48 +974,42 @@ extension NSPanel {
     /// AppKit property that is only safe to read on the main thread.
     @MainActor
     func waitUntilClosed(timeout: Duration = .milliseconds(200)) async {
-        // Fast-path: already hidden.
         guard isVisible else { return }
 
         await withTaskGroup(of: Void.self) { group in
-            // Task 1: resume as soon as isVisible becomes false via KVO.
-            // Uses tryClaimOnce() so the continuation is resumed exactly once
-            // whether the KVO fires first or the task is cancelled by
-            // group.cancelAll() when the timeout wins — preventing a hang.
-            group.addTask { @MainActor [weak self] in
-                guard let self else { return }
-                var bag = Set<AnyCancellable>()
-                // claimed ensures the continuation is resumed exactly once
-                // across the KVO path and the cancellation path.
-                let claimed = OSAllocatedUnfairLock(initialState: false)
-                let contHolder = OSAllocatedUnfairLock<CheckedContinuation<Void, Never>?>(initialState: nil)
-                await withTaskCancellationHandler {
-                    await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
-                        contHolder.withLock { $0 = cont }
-                        self.publisher(for: \.isVisible)
-                            .filter { !$0 }
-                            .first()
-                            .sink { _ in
-                                if claimed.tryClaimOnce() {
-                                    contHolder.withLock { $0 }?.resume()
-                                }
-                            }
-                            .store(in: &bag)
-                    }
-                } onCancel: {
-                    if claimed.tryClaimOnce() {
-                        contHolder.withLock { $0 }?.resume()
-                    }
-                }
+            group.addTask {
+                await self.waitForInvisibleWithKVO()
             }
-            // Task 2: timeout guard — resumes the group if the panel never
-            // becomes invisible within the allotted time.
             group.addTask {
                 try? await Task.sleep(for: timeout)
             }
-            // Whichever task finishes first wins; cancel the other.
             _ = await group.next()
             group.cancelAll()
+        }
+    }
+
+    @MainActor
+    private func waitForInvisibleWithKVO() async {
+        var bag = Set<AnyCancellable>()
+        let claimed = OSAllocatedUnfairLock(initialState: false)
+        let contHolder = OSAllocatedUnfairLock<CheckedContinuation<Void, Never>?>(initialState: nil)
+        await withTaskCancellationHandler {
+            await withCheckedContinuation { (cont: CheckedContinuation<Void, Never>) in
+                contHolder.withLock { $0 = cont }
+                self.publisher(for: \.isVisible)
+                    .filter { !$0 }
+                    .first()
+                    .sink { _ in
+                        if claimed.tryClaimOnce() {
+                            contHolder.withLock { $0 }?.resume()
+                        }
+                    }
+                    .store(in: &bag)
+            }
+        } onCancel: {
+            if claimed.tryClaimOnce() {
+                contHolder.withLock { $0 }?.resume()
+            }
         }
     }
 }

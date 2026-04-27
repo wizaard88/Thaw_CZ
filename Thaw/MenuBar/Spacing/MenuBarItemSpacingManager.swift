@@ -201,37 +201,39 @@ final class MenuBarItemSpacingManager {
 
         var failedApps = [String]()
 
-        await withTaskGroup(of: Void.self) { group in
+        await withTaskGroup(of: String?.self) { group in
             for pid in pids {
                 guard
                     let app = NSRunningApplication(processIdentifier: pid),
-                    app.bundleIdentifier != "com.apple.controlcenter", // ControlCenter handles its own relaunch, so skip it.
+                    app.bundleIdentifier != "com.apple.controlcenter",
                     app != .current
                 else {
                     break
                 }
-                group.addTask { @MainActor in
+                group.addTask {
                     do {
                         try await self.relaunchApp(app)
                     } catch {
-                        guard let name = app.localizedName else {
-                            return
-                        }
+                        guard let name = app.localizedName else { return nil }
                         if app.bundleIdentifier == "com.apple.Spotlight" {
-                            // Spotlight automatically relaunches, so only consider it a failure if it never quit.
                             if let latestSpotlightInstance =
                                 NSRunningApplication.runningApplications(
                                     withBundleIdentifier: "com.apple.Spotlight"
                                 ).first,
-                                latestSpotlightInstance.processIdentifier
-                                == app.processIdentifier
+                                latestSpotlightInstance.processIdentifier == app.processIdentifier
                             {
-                                failedApps.append(name)
+                                return name
                             }
                         } else {
-                            failedApps.append(name)
+                            return name
                         }
                     }
+                    return nil
+                }
+            }
+            for await failure in group {
+                if let name = failure {
+                    failedApps.append(name)
                 }
             }
         }

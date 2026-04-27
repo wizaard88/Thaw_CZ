@@ -10,15 +10,8 @@ import Combine
 import Ifrit
 import SwiftUI
 
-private struct MenuBarSearchPanelKey: EnvironmentKey {
-    static let defaultValue: MenuBarSearchPanel? = nil
-}
-
 extension EnvironmentValues {
-    var menuBarSearchPanel: MenuBarSearchPanel? {
-        get { self[MenuBarSearchPanelKey.self] }
-        set { self[MenuBarSearchPanelKey.self] = newValue }
-    }
+    @Entry var menuBarSearchPanel: MenuBarSearchPanel?
 }
 
 /// A panel that contains the menu bar search interface.
@@ -93,7 +86,7 @@ final class MenuBarSearchPanel: NSPanel {
     {
         switch selection {
         case let .item(tag, windowID):
-            if let windowID = windowID {
+            if let windowID {
                 return appState?.itemManager.itemCache.managedItems.first(where: { $0.windowID == windowID })
             }
             return appState?.itemManager.itemCache.managedItems.first(matching: tag)
@@ -119,7 +112,7 @@ final class MenuBarSearchPanel: NSPanel {
             appState?.itemManager.itemCache.managedItems.first(matching: tag)
         }
 
-        guard let item = item else {
+        guard let item else {
             Self.diagLog.error("Cannot save editing name, no matching item")
             return
         }
@@ -319,7 +312,7 @@ final class MenuBarSearchPanel: NSPanel {
     @MainActor
     override func close() {
         // Only save if window is actually visible and has content
-        if isVisible, let screen = screen, contentView != nil {
+        if isVisible, let screen, contentView != nil {
             saveFrameForDisplay(screen)
         }
         cacheTask?.cancel()
@@ -473,9 +466,8 @@ private struct MenuBarSearchContentView: View {
             .frame(width: 600, height: 400)
             .fixedSize()
             .onAppear {
-                // Delay focus slightly to ensure the window is fully key
-                // and the text field is ready to receive focus.
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(50))
                     searchFieldIsFocused = true
                 }
             }
@@ -656,11 +648,9 @@ private struct MenuBarSearchContentView: View {
             }
 
         if model.searchText.isEmpty {
-            model.displayedItems = searchItems.map { $0.listItem }
+            model.displayedItems = searchItems.map(\.listItem)
         } else {
-            let selectableItems = searchItems.filter {
-                $0.listItem.isSelectable
-            }
+            let selectableItems = searchItems.filter(\.listItem.isSelectable)
             // Using weighted search via FuseProp
             let fuseResults = model.fuse.searchSync(model.searchText, in: selectableItems, by: \.properties)
 
@@ -673,7 +663,7 @@ private struct MenuBarSearchContentView: View {
                 .sorted { (lhs: ScoredItem, rhs: ScoredItem) -> Bool in
                     lhs.score > rhs.score
                 }
-                .map { $0.listItem }
+                .map(\.listItem)
         }
     }
 

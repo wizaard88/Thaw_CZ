@@ -72,8 +72,8 @@ extension LayoutBarArrangedView: NSDraggingSource {
 
         session.animatesToStartingPositionsOnCancelOrFail = false
 
-        DispatchQueue.main.async {
-            self.isDraggingPlaceholder = true
+        Task { @MainActor in
+            isDraggingPlaceholder = true
         }
     }
 
@@ -102,4 +102,4 @@ extension LayoutBarArrangedView: NSDraggingSource {
     }
 }
 
-extension LayoutBarArrangedView: NSAccessibilityLayoutItem {}
+extension LayoutBarArrangedView: @preconcurrency NSAccessibilityLayoutItem {}

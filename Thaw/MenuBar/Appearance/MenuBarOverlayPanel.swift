@@ -13,7 +13,7 @@ import ScreenCaptureKit
 // MARK: - Overlay Panel
 
 /// A subclass of `NSPanel` that sits atop the menu bar to alter its appearance.
-final class MenuBarOverlayPanel: NSPanel {
+final class MenuBarOverlayPanel: NSPanel, @unchecked Sendable {
     private let diagLog = DiagLog(category: "MenuBarOverlayPanel")
     /// Flags representing the updatable components of a panel.
     enum UpdateFlag: String, CustomStringConvertible {
@@ -46,35 +46,19 @@ final class MenuBarOverlayPanel: NSPanel {
         func setTask(
             for flag: UpdateFlag,
             timeout: Duration,
-            operation: @escaping () async throws -> Void
+            operation: @escaping @Sendable () async throws -> Void
         ) {
             cancelTask(for: flag)
-            tasks[flag] = Task.detached {
-                try await Self.runWithTimeout(timeout, operation: operation)
-            }
+            tasks[flag] = Self.runWithTimeout(timeout: timeout, operation: operation)
         }
 
-        /// Runs an operation with a timeout, cancelling it if the timeout elapses.
         private static func runWithTimeout(
-            _ timeout: Duration,
-            operation: @escaping () async throws -> Void
-        ) async throws {
-            let operationTask = Task {
+            timeout: Duration,
+            operation: @escaping @Sendable () async throws -> Void
+        ) -> Task<Void, Error> {
+            Task {
                 try await operation()
-            }
-            let timeoutTask = Task {
-                try await Task.sleep(for: timeout)
-                operationTask.cancel()
-                throw CancellationError()
-            }
-
-            do {
-                try await operationTask.value
-                timeoutTask.cancel()
-            } catch {
-                timeoutTask.cancel()
-                operationTask.cancel()
-                throw error
+                try? await Task.sleep(for: timeout)
             }
         }
 
@@ -251,7 +235,7 @@ final class MenuBarOverlayPanel: NSPanel {
                 updateTaskContext.setTask(
                     for: .desktopWallpaper,
                     timeout: .seconds(5)
-                ) { [weak self] in
+                ) { @MainActor [weak self] in
                     self?.insertUpdateFlag(.desktopWallpaper)
                 }
             }
@@ -290,11 +274,7 @@ final class MenuBarOverlayPanel: NSPanel {
             updateTaskContext.setTask(
                 for: .applicationMenuFrame,
                 timeout: .seconds(10)
-            ) { [weak self] in
-                // Poll until AX returns a frame, then do a confirm run to
-                // make sure the value has settled before committing it.
-                // The old frame is held throughout so the overlay shows no
-                // visual gap — a single clean swap happens once confirmed.
+            ) { @MainActor [weak self] in
                 var candidate: CGRect?
                 for _ in 0 ..< 10 {
                     try Task.checkCancellation()
@@ -303,11 +283,9 @@ final class MenuBarOverlayPanel: NSPanel {
                         .getApplicationMenuFrame(bypassCache: true)
                     if let latest {
                         if latest == candidate {
-                            // Confirmed: two consecutive reads agree.
                             self.insertUpdateFlag(.applicationMenuFrame)
                             break
                         }
-                        // New or changed candidate — start confirming it.
                         candidate = latest
                     }
                     try await Task.sleep(for: .milliseconds(150))

@@ -109,7 +109,7 @@ final class MenuBarManager: ObservableObject {
             let window = hiddenSection.controlItem.window
         {
             window.publisher(for: \.frame)
-                .map { $0.origin.y }
+                .map(\.origin.y)
                 .removeDuplicates()
                 .receive(on: DispatchQueue.main)
                 .sink { [weak self] _ in
@@ -235,7 +235,7 @@ final class MenuBarManager: ObservableObject {
         .store(in: &c)
 
         // Hide application menus when a section is shown (if applicable).
-        Publishers.MergeMany(sections.map { $0.controlItem.$state })
+        Publishers.MergeMany(sections.map(\.controlItem.$state))
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 guard let self, let appState else {
@@ -320,17 +320,16 @@ final class MenuBarManager: ObservableObject {
                         let appMenuRightStart = appMenuFrame.maxX
 
                         // Available space: if app menu extends into notch, add notch width; otherwise use visible frame
-                        let spaceAvailableFromAppMenuEnd: CGFloat
-                        if let notch = screen.frameOfNotch {
+                        let spaceAvailableFromAppMenuEnd: CGFloat = if let notch = screen.frameOfNotch {
                             if appMenuRightStart > notch.minX {
                                 // App menu extends into notch, items get moved past notch
-                                spaceAvailableFromAppMenuEnd = (notch.minX - appMenuRightStart) + (screen.visibleFrame.maxX - notch.maxX)
+                                (notch.minX - appMenuRightStart) + (screen.visibleFrame.maxX - notch.maxX)
                             } else {
                                 // App menu doesn't extend into notch
-                                spaceAvailableFromAppMenuEnd = screen.visibleFrame.maxX - appMenuRightStart
+                                screen.visibleFrame.maxX - appMenuRightStart
                             }
                         } else {
-                            spaceAvailableFromAppMenuEnd = screen.visibleFrame.maxX - appMenuRightStart
+                            screen.visibleFrame.maxX - appMenuRightStart
                         }
 
                         let spaceNeededFromAppMenuEnd = newRightmostPos - appMenuRightStart

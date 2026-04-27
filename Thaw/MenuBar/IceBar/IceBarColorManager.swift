@@ -9,6 +9,7 @@
 import Combine
 import SwiftUI
 
+@MainActor
 final class IceBarColorManager: ObservableObject {
     @Published private(set) var colorInfo: MenuBarAverageColorInfo?
 

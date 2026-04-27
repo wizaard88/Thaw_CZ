@@ -9,6 +9,7 @@
 import Cocoa
 
 extension NSSplitViewItem {
+    @MainActor
     @nonobjc private static let swizzler: () = {
         let originalCanCollapseSel = #selector(getter: canCollapse)
         let swizzledCanCollapseSel = #selector(getter: swizzledCanCollapse)
@@ -23,6 +24,7 @@ extension NSSplitViewItem {
         method_exchangeImplementations(originalCanCollapseMethod, swizzledCanCollapseMethod)
     }()
 
+    @MainActor
     @objc private var swizzledCanCollapse: Bool {
         if
             let window = viewController.view.window,
@@ -33,6 +35,7 @@ extension NSSplitViewItem {
         return self.swizzledCanCollapse
     }
 
+    @MainActor
     static func swizzle() {
         _ = swizzler
     }

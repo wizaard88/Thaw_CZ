@@ -152,7 +152,7 @@ extension MenuBarItemTag {
     static let nonHideableItems: [MenuBarItemTag] = [visibleControlItem, audioVideoModule, faceTime, screenCaptureUI]
 
     /// An array of tags for items representing Ice's control items.
-    static let controlItems = ControlItem.Identifier.allCases.map { $0.tag }
+    static let controlItems = ControlItem.Identifier.allCases.map(\.tag)
 
     // MARK: Control Items
 

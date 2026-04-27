@@ -6,7 +6,7 @@
 //  Copyright (Thaw) © 2026 Toni Förster
 //  Licensed under the GNU GPLv3
 
-import LaunchAtLogin
+@preconcurrency import LaunchAtLogin
 import SwiftUI
 
 struct GeneralSettingsPane: View {
@@ -172,7 +172,7 @@ struct GeneralSettingsPane: View {
             Toggle("Show on click", isOn: $settings.showOnClick)
                 .annotation("Click an empty area of the menu bar to show hidden menu bar items.")
 
-            if settings.showOnClick && appState.settings.advanced.enableAlwaysHiddenSection {
+            if settings.showOnClick, appState.settings.advanced.enableAlwaysHiddenSection {
                 Toggle("Double-click for always-hidden", isOn: $settings.showOnDoubleClick)
                     .annotation("Double-click an empty area of the menu bar to show always-hidden menu bar items.")
             }

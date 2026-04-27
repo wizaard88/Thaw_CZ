@@ -10,9 +10,9 @@ import Cocoa
 
 /// An object that receives events from a defined point in
 /// the event stream.
-final class EventTap {
+final class EventTap: @unchecked Sendable {
     /// Pool to limit concurrent EventTaps and prevent Mach port leaks
-    private static var activeTaps: Set<ObjectIdentifier> = []
+    private static nonisolated(unsafe) var activeTaps: Set<ObjectIdentifier> = []
     private static let maxConcurrentTaps = 10
     private static let tapQueue = DispatchQueue(label: "EventTap.pool", attributes: .concurrent)
 
@@ -251,7 +251,7 @@ final class EventTap {
             return true
         }
         let tapLabel = self.label
-        if machPort == nil && !isInvalidated {
+        if machPort == nil, !isInvalidated {
             // Tap was never successfully created.
             Self.diagLog.warning("Event tap \"\(tapLabel)\" has no Mach port, attempting creation")
             return recreate()

@@ -107,7 +107,7 @@ final class LayoutBarPaddingView: NSView {
             alert.messageText = String(localized: "Cannot move \(Constants.displayName) icon.")
             alert.informativeText = String(localized: "The \(Constants.displayName) icon must always remain in the visible section.")
 
-            if let window = window {
+            if let window {
                 alert.beginSheetModal(for: window)
             }
 

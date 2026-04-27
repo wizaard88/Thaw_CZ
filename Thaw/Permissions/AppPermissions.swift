@@ -47,13 +47,13 @@ final class AppPermissions: ObservableObject {
 
     /// The permissions required for basic app functionality.
     var requiredPermissions: [Permission] {
-        allPermissions.filter { $0.isRequired }
+        allPermissions.filter(\.isRequired)
     }
 
     /// Creates a new permissions manager.
     init() {
         self.updatePermissionsState()
-        self.cancellable = Publishers.MergeMany(allPermissions.map { $0.$hasPermission })
+        self.cancellable = Publishers.MergeMany(allPermissions.map(\.$hasPermission))
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in
                 self?.updatePermissionsState()
@@ -62,9 +62,9 @@ final class AppPermissions: ObservableObject {
 
     /// Updates the current permissions state.
     private func updatePermissionsState() {
-        if allPermissions.allSatisfy({ $0.hasPermission }) {
+        if allPermissions.allSatisfy(\.hasPermission) {
             permissionsState = .hasAll
-        } else if requiredPermissions.allSatisfy({ $0.hasPermission }) {
+        } else if requiredPermissions.allSatisfy(\.hasPermission) {
             permissionsState = .hasRequired
         } else {
             permissionsState = .missing

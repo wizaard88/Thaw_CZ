@@ -13,8 +13,8 @@ import Foundation
 enum MouseHelpers {
     private static let diagLog = DiagLog(category: "MouseHelpers")
     private static let cursorLock = DispatchQueue(label: "MouseHelpers.cursorLock")
-    private static var cursorHideCount = 0
-    private static var autoShowWorkItem: DispatchWorkItem?
+    private static nonisolated(unsafe) var cursorHideCount = 0
+    private static nonisolated(unsafe) var autoShowWorkItem: DispatchWorkItem?
     private static let defaultWatchdogTimeout: DispatchTimeInterval = .seconds(1)
 
     private static func formattedTimeout(_ interval: DispatchTimeInterval) -> String {

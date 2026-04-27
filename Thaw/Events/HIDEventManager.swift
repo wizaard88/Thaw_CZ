@@ -6,7 +6,7 @@
 //  Copyright (Thaw) © 2026 Toni Förster
 //  Licensed under the GNU GPLv3
 
-import AXSwift
+@preconcurrency import AXSwift
 import Cocoa
 import Combine
 import os
@@ -1564,11 +1564,10 @@ extension HIDEventManager {
         // Use the AX result when available; fall back to geometric detection
         // when hit-testing is indeterminate (e.g., due to expanded section-divider
         // windows interfering with AX queries).
-        let isInAppMenu: Bool
-        if let result = appMenuResult {
-            isInAppMenu = result
+        let isInAppMenu: Bool = if let result = appMenuResult {
+            result
         } else {
-            isInAppMenu = isMouseInsideApplicationMenu(appState: appState, screen: screen)
+            isMouseInsideApplicationMenu(appState: appState, screen: screen)
         }
 
         return !isInAppMenu

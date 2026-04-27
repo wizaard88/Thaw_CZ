@@ -7,45 +7,39 @@
 //  Licensed under the GNU GPLv3
 
 import Cocoa
-import Combine
+@preconcurrency import Combine
 
 final class RunLoopLocalEventMonitor {
     private let runLoop = CFRunLoopGetCurrent()
+    private let mask: NSEvent.EventTypeMask
     private let mode: RunLoop.Mode
-    private let handler: (NSEvent) -> NSEvent?
-    private let observer: CFRunLoopObserver
+    private let handler: @Sendable (NSEvent) -> NSEvent?
+    private let observer: CFRunLoopObserver?
 
-    /// Creates an event monitor with the given event type mask and handler.
-    ///
-    /// - Parameters:
-    ///   - mask: An event type mask specifying which events to monitor.
-    ///   - handler: A handler to execute when the event monitor receives
-    ///     an event corresponding to the event types in `mask`.
     init(
         mask: NSEvent.EventTypeMask,
         mode: RunLoop.Mode,
-        handler: @escaping (_ event: NSEvent) -> NSEvent?
+        handler: @escaping @Sendable (_ event: NSEvent) -> NSEvent?
     ) {
+        self.mask = mask
         self.mode = mode
         self.handler = handler
-        self.observer = CFRunLoopObserverCreateWithHandler(
+        let capturedMask = mask
+        let capturedHandler = handler
+        let obs = CFRunLoopObserverCreateWithHandler(
             kCFAllocatorDefault,
             CFRunLoopActivity.beforeSources.rawValue,
             true,
             0
         ) { _, _ in
-            var events = [NSEvent]()
-
-            while let event = NSApp.nextEvent(matching: .any, until: nil, inMode: .default, dequeue: true) {
-                events.append(event)
-            }
+            let events = Self.drainMainRunLoop()
 
             for event in events {
                 var handledEvent: NSEvent?
 
-                if !mask.contains(NSEvent.EventTypeMask(rawValue: 1 << event.type.rawValue)) {
+                if !capturedMask.contains(NSEvent.EventTypeMask(rawValue: 1 << event.type.rawValue)) {
                     handledEvent = event
-                } else if let eventFromHandler = handler(event) {
+                } else if let eventFromHandler = capturedHandler(event) {
                     handledEvent = eventFromHandler
                 }
 
@@ -53,9 +47,37 @@ final class RunLoopLocalEventMonitor {
                     continue
                 }
 
-                NSApp.postEvent(handledEvent, atStart: false)
+                Self.postEvent(handledEvent, atStart: false)
             }
         }
+        self.observer = obs
+    }
+
+    private static nonisolated var sharedApp: NSApplication {
+        let sel = #selector(getter: NSApplication.shared)
+        typealias SharedImp = @convention(c) (AnyClass, Selector) -> NSApplication
+        let imp = unsafeBitCast(NSApplication.self.method(for: sel), to: SharedImp.self)
+        return imp(NSApplication.self, sel)
+    }
+
+    private static nonisolated func drainMainRunLoop() -> [NSEvent] {
+        var events = [NSEvent]()
+        let app = sharedApp
+        let nextSel = #selector(NSApplication.nextEvent(matching:until:inMode:dequeue:))
+        typealias NextImp = @convention(c) (AnyObject, Selector, NSEvent.EventTypeMask, Date?, RunLoop.Mode, Bool) -> NSEvent?
+        let nextImp = unsafeBitCast(app.method(for: nextSel), to: NextImp.self)
+        while let event = nextImp(app, nextSel, .any, nil, .default, true) {
+            events.append(event)
+        }
+        return events
+    }
+
+    private static nonisolated func postEvent(_ event: NSEvent, atStart: Bool) {
+        let app = sharedApp
+        let sel = #selector(NSApplication.postEvent(_:atStart:))
+        typealias PostImp = @convention(c) (AnyObject, Selector, NSEvent, Bool) -> Void
+        let postImp = unsafeBitCast(app.method(for: sel), to: PostImp.self)
+        postImp(app, sel, event, atStart)
     }
 
     deinit {
@@ -80,7 +102,6 @@ final class RunLoopLocalEventMonitor {
 }
 
 extension RunLoopLocalEventMonitor {
-    /// A publisher that emits local events for an event type mask.
     struct RunLoopLocalEventPublisher: Publisher {
         typealias Output = NSEvent
         typealias Failure = Never
@@ -88,22 +109,19 @@ extension RunLoopLocalEventMonitor {
         let mask: NSEvent.EventTypeMask
         let mode: RunLoop.Mode
 
-        func receive<S: Subscriber<Output, Failure>>(subscriber: S) {
+        func receive(subscriber: some Subscriber<Output, Failure>) {
             let subscription = RunLoopLocalEventSubscription(mask: mask, mode: mode, subscriber: subscriber)
             subscriber.receive(subscription: subscription)
         }
     }
 
-    /// Returns a publisher that emits local events for the given event type mask.
-    ///
-    /// - Parameter mask: An event type mask specifying which events to publish.
     static func publisher(for mask: NSEvent.EventTypeMask, mode: RunLoop.Mode) -> RunLoopLocalEventPublisher {
         RunLoopLocalEventPublisher(mask: mask, mode: mode)
     }
 }
 
 extension RunLoopLocalEventMonitor.RunLoopLocalEventPublisher {
-    private final class RunLoopLocalEventSubscription<S: Subscriber<Output, Failure>>: Subscription {
+    private final class RunLoopLocalEventSubscription<S: Subscriber<Output, Failure>>: Subscription, @unchecked Sendable {
         let mask: NSEvent.EventTypeMask
         let mode: RunLoop.Mode
         private var subscriber: S?
@@ -120,9 +138,7 @@ extension RunLoopLocalEventMonitor.RunLoopLocalEventPublisher {
             self.monitor.start()
         }
 
-        func request(_: Subscribers.Demand) {
-            // Intentionally empty: local AppKit events are pushed by the run loop, so this monitor cannot honor Combine backpressure.
-        }
+        func request(_: Subscribers.Demand) {}
 
         func cancel() {
             monitor.stop()

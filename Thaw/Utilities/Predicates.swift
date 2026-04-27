@@ -6,7 +6,7 @@
 //  Copyright (Thaw) © 2026 Toni Förster
 //  Licensed under the GNU GPLv3
 
-import Cocoa
+@preconcurrency import AppKit
 
 /// A namespace for predicates.
 enum Predicates<Input> {
@@ -40,9 +40,11 @@ enum Predicates<Input> {
 // MARK: - Control Item Predicates
 
 extension Predicates where Input == NSLayoutConstraint {
+    @MainActor
     static func controlItemConstraint(button: NSStatusBarButton) -> NonThrowingPredicate {
-        predicate { constraint in
-            constraint.secondItem === button.superview
+        let target = button.superview
+        return predicate { constraint in
+            constraint.secondItem === target
         }
     }
 }

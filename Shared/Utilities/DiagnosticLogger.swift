@@ -30,9 +30,9 @@ final class DiagnosticLogger: @unchecked Sendable {
                 current = newValue
                 return old
             }
-            if newValue && !oldValue {
+            if newValue, !oldValue {
                 openLogFile()
-            } else if !newValue && oldValue {
+            } else if !newValue, oldValue {
                 closeLogFile()
             }
         }

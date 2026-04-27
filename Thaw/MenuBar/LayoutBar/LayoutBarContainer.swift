@@ -210,7 +210,7 @@ final class LayoutBarContainer: NSView {
         // get the max height of all arranged views to calculate the
         // y coordinate of each view's origin
         let maxHeight = arrangedViews.lazy
-            .map { $0.bounds.height }
+            .map(\.bounds.height)
             .max() ?? 0
 
         for var view in arrangedViews {
@@ -233,7 +233,7 @@ final class LayoutBarContainer: NSView {
             // be a newly added view
             view.setFrameOrigin(
                 CGPoint(
-                    x: previous.map { $0.frame.maxX } ?? 0,
+                    x: previous.map(\.frame.maxX) ?? 0,
                     y: (maxHeight / 2) - view.bounds.midY
                 )
             )
@@ -321,7 +321,7 @@ final class LayoutBarContainer: NSView {
             }
             // updating normally relies on the presence of other arranged views,
             // but if the container is empty, it needs to be handled separately
-            guard !arrangedViews.filter({ $0.isEnabled }).isEmpty else {
+            guard !arrangedViews.filter(\.isEnabled).isEmpty else {
                 arrangedViews.insert(sourceView, at: 0)
                 return .move
             }

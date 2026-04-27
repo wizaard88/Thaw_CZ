@@ -8,7 +8,8 @@
 
 import CoreGraphics
 import Foundation
-import ScreenCaptureKit
+import os.lock
+@preconcurrency import ScreenCaptureKit
 
 /// A namespace for screen capture operations.
 enum ScreenCapture {
@@ -48,7 +49,7 @@ enum ScreenCapture {
     /// result with a newly computed value.
     static func cachedCheckPermissions(reset: Bool = false) -> Bool {
         enum Context {
-            static var cachedResult: Bool?
+            static nonisolated(unsafe) var cachedResult: Bool?
         }
         if !reset, let result = Context.cachedResult {
             return result
@@ -148,14 +149,13 @@ enum ScreenCapture {
         }
 
         // Create filter: include display, exclude the specified window
-        let filter: SCContentFilter
-        if let excludedWindow = excludedWindow {
-            filter = SCContentFilter(
+        let filter = if let excludedWindow {
+            SCContentFilter(
                 display: display,
                 excludingWindows: [excludedWindow]
             )
         } else {
-            filter = SCContentFilter(display: display, excludingWindows: [])
+            SCContentFilter(display: display, excludingWindows: [])
         }
 
         // Configure stream for single frame capture.
@@ -247,25 +247,15 @@ private enum ScreenCaptureError: Error {
     case noContent
 }
 
-/// Helper class to capture frames from SCStream
-/// Thread-safe box for storing and retrieving a continuation across concurrent contexts
-private final class ContinuationBox<T, E: Error>: @unchecked Sendable {
-    private var continuation: CheckedContinuation<T, E>?
-    private let lock = NSLock()
+private final class ContinuationBox<T, E: Error>: Sendable {
+    private let lock = OSAllocatedUnfairLock<CheckedContinuation<T, E>?>(initialState: nil)
 
     func setContinuation(_ cont: CheckedContinuation<T, E>) {
-        lock.lock()
-        continuation = cont
-        lock.unlock()
+        lock.withLock { $0 = cont }
     }
 
-    /// Returns and clears the continuation atomically, or nil if already taken
     func takeContinuation() -> CheckedContinuation<T, E>? {
-        lock.lock()
-        let cont = continuation
-        continuation = nil
-        lock.unlock()
-        return cont
+        lock.withLock { $0.take() }
     }
 }
 
@@ -276,14 +266,11 @@ private final class FrameCaptor: NSObject, SCStreamOutput, SCStreamDelegate, @un
     /// Reused across frames to avoid repeated GPU/Metal setup costs.
     private let ciContext = CIContext()
 
-    private var continuation: CheckedContinuation<CGImage?, Never>?
-    private var bufferedImage: CGImage?
-    private let lock = NSLock()
+    private let lock = OSAllocatedUnfairLock<(continuation: CheckedContinuation<CGImage?, Never>?, bufferedImage: CGImage?)>(initialState: (nil, nil))
 
     func stream(_: SCStream, didOutputSampleBuffer sampleBuffer: CMSampleBuffer, of type: SCStreamOutputType) {
         guard type == .screen else { return }
 
-        // Check frame status - only process complete frames
         guard let attachments = CMSampleBufferGetSampleAttachmentsArray(sampleBuffer, createIfNecessary: false) as? [[SCStreamFrameInfo: Any]],
               let statusInt = attachments.first?[SCStreamFrameInfo.status] as? Int,
               let frameStatus = SCFrameStatus(rawValue: statusInt),
@@ -297,7 +284,6 @@ private final class FrameCaptor: NSObject, SCStreamOutput, SCStreamDelegate, @un
             return
         }
 
-        // Convert CVImageBuffer to CGImage
         let ciImage = CIImage(cvImageBuffer: imageBuffer)
         guard let cgImage = ciContext.createCGImage(ciImage, from: ciImage.extent) else {
             resumeOrBuffer(with: nil)
@@ -312,51 +298,50 @@ private final class FrameCaptor: NSObject, SCStreamOutput, SCStreamDelegate, @un
     }
 
     private func resumeOrBuffer(with image: CGImage?) {
-        lock.lock()
-        if let cont = continuation {
-            continuation = nil
-            lock.unlock()
+        let cont = lock.withLock { state -> CheckedContinuation<CGImage?, Never>? in
+            if let c = state.continuation {
+                state.continuation = nil
+                return c
+            }
+            state.bufferedImage = image
+            return nil
+        }
+        if let cont {
             cont.resume(returning: image)
-        } else {
-            bufferedImage = image
-            lock.unlock()
         }
     }
 
     func waitForFrame() async -> CGImage? {
         await withTaskCancellationHandler {
             await withCheckedContinuation { cont in
-                lock.lock()
-                // Check if frame already buffered
-                if let image = bufferedImage {
-                    bufferedImage = nil
-                    lock.unlock()
+                let shouldResume = lock.withLock { state -> CGImage?? in
+                    if let image = state.bufferedImage {
+                        state.bufferedImage = nil
+                        return image
+                    }
+                    if Task.isCancelled {
+                        return nil
+                    }
+                    state.continuation = cont
+                    return .some(nil)
+                }
+                if let image = shouldResume {
                     cont.resume(returning: image)
-                    return
-                }
-                // If already cancelled, resume immediately instead of storing continuation.
-                if Task.isCancelled {
-                    lock.unlock()
+                } else {
                     cont.resume(returning: nil)
-                    return
                 }
-                // Otherwise, install continuation
-                self.continuation = cont
-                lock.unlock()
             }
         } onCancel: { [weak self] in
             self?.cancelPendingWait()
         }
     }
 
-    /// Clears the stored continuation and resumes it with nil.
-    /// Does not stop the SCStream; the caller remains responsible for stopCapture().
     private func cancelPendingWait() {
-        lock.lock()
-        let cont = continuation
-        continuation = nil
-        lock.unlock()
-
+        let cont = lock.withLock { state -> CheckedContinuation<CGImage?, Never>? in
+            let c = state.continuation
+            state.continuation = nil
+            return c
+        }
         cont?.resume(returning: nil)
     }
 }

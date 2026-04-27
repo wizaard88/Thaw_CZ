@@ -6,7 +6,7 @@
 //  Copyright (Thaw) © 2026 Toni Förster
 //  Licensed under the GNU GPLv3
 
-import AXSwift
+@preconcurrency import AXSwift
 import Cocoa
 import Combine
 import os
@@ -29,7 +29,7 @@ final class SourcePIDCache {
     /// An object that contains a running application and provides an
     /// interface to access relevant information, such as its process
     /// identifier and extras menu bar.
-    private final class CachedApplication {
+    private final class CachedApplication: @unchecked Sendable {
         private let runningApp: NSRunningApplication
         private let lock = NSLock()
         private var extrasMenuBar: UIElement?
@@ -140,7 +140,7 @@ final class SourcePIDCache {
     }
 
     /// The shared cache.
-    static let shared = SourcePIDCache()
+    static nonisolated(unsafe) let shared = SourcePIDCache()
 
     /// The cache's protected state.
     private let state = OSAllocatedUnfairLock(initialState: State())

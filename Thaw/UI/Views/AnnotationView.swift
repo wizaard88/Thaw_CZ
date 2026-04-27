@@ -145,12 +145,12 @@ extension View {
     ///   - font: The font to apply to the annotation content's environment.
     ///   - foregroundStyle: The foreground style to apply to the annotation content's environment.
     ///   - content: A view builder that creates the annotation content.
-    func annotation<Content: View, ForegroundStyle: ShapeStyle>(
+    func annotation(
         alignment: HorizontalAlignment = .leading,
         spacing: CGFloat = .annotationDefaultSpacing,
         font: Font? = .subheadline,
-        foregroundStyle: ForegroundStyle = .secondary,
-        @ViewBuilder content: () -> Content
+        foregroundStyle: some ShapeStyle = .secondary,
+        @ViewBuilder content: () -> some View
     ) -> some View {
         AnnotationView(
             alignment: alignment,
@@ -172,12 +172,12 @@ extension View {
     ///   - spacing: The vertical spacing between this view and the annotation content.
     ///   - font: The font to apply to the annotation content's environment.
     ///   - foregroundStyle: The foreground style to apply to the annotation content's environment.
-    func annotation<ForegroundStyle: ShapeStyle>(
+    func annotation(
         _ titleKey: LocalizedStringKey,
         alignment: HorizontalAlignment = .leading,
         spacing: CGFloat = .annotationDefaultSpacing,
         font: Font? = .subheadline,
-        foregroundStyle: ForegroundStyle = .secondary
+        foregroundStyle: some ShapeStyle = .secondary
     ) -> some View {
         AnnotationView(
             titleKey,

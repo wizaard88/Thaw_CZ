@@ -182,7 +182,7 @@ private func dlerrorMessage() -> String {
 enum SkyLightAPI {
     private static let diagLog = DiagLog(category: "SkyLightAPI")
 
-    private static let handle: UnsafeMutableRawPointer? = {
+    private static nonisolated(unsafe) let handle: UnsafeMutableRawPointer? = {
         let handle = dlopen(SharedConstants.skyLightFrameworkPath, RTLD_NOW)
         if handle == nil {
             diagLog.error("Failed to open SkyLight framework: \(dlerrorMessage())")
