@@ -349,7 +349,7 @@ final class MenuBarItemManager: ObservableObject {
         var allCurrentIdentifiers = Set<String>()
         var allCurrentBaseIdentifiers = Set<String>()
         for section in MenuBarSection.Name.allCases {
-            for item in cache[section] where !item.isControlItem && item.tag.instanceIndex == 0 {
+            for item in cache[section] where !item.isControlItem && item.tag.instanceIndex == 0 && item.sourcePID != nil {
                 let uniqueID = item.uniqueIdentifier
                 allCurrentIdentifiers.insert(uniqueID)
                 // Also track base identifier (without instanceIndex) to handle
@@ -947,7 +947,10 @@ extension MenuBarItemManager {
         /// If a task from a previous call to this method is currently
         /// running, that task is cancelled and replaced.
         func runCacheTask(_ operation: @escaping () async -> Void) async {
-            cacheTask.take()?.cancel()
+            if let existing = cacheTask.take() {
+                existing.cancel()
+                _ = await existing.value
+            }
             let task = Task(operation: operation)
             cacheTask = task
             await task.value
@@ -1337,6 +1340,11 @@ extension MenuBarItemManager {
 
             MenuBarItemManager.diagLog.debug("cacheItemsRegardless: getMenuBarItems returned \(items.count) items")
 
+            guard !Task.isCancelled else {
+                MenuBarItemManager.diagLog.debug("cacheItemsRegardless: cancelled after getMenuBarItems")
+                return
+            }
+
             if items.isEmpty {
                 MenuBarItemManager.diagLog.error("cacheItemsRegardless: getMenuBarItems returned ZERO items even after retry — this is the root cause of 'Loading menu bar items' being stuck")
             }
@@ -1380,7 +1388,17 @@ extension MenuBarItemManager {
 
             MenuBarItemManager.diagLog.debug("cacheItemsRegardless: found control items, hidden windowID=\(controlItems.hidden.windowID), alwaysHidden=\(controlItems.alwaysHidden.map { "\($0.windowID)" } ?? "nil")")
 
+            guard !Task.isCancelled else {
+                MenuBarItemManager.diagLog.debug("cacheItemsRegardless: cancelled after control item discovery")
+                return
+            }
+
             await enforceControlItemOrder(controlItems: controlItems)
+
+            guard !Task.isCancelled else {
+                MenuBarItemManager.diagLog.debug("cacheItemsRegardless: cancelled before relocateNewLeftmostItems")
+                return
+            }
 
             if await relocateNewLeftmostItems(
                 items,
@@ -3783,6 +3801,14 @@ extension MenuBarItemManager {
         persistKnownItemIdentifiers()
 
         let destination = newItemsMoveDestination(for: controlItems, among: items)
+
+        // Skip no-op moves: item is already in the target section.
+        var context = CacheContext(controlItems: controlItems, displayID: Bridging.getActiveMenuBarDisplayID())
+        if context.findSection(for: candidate) == effectiveNewItemsSection {
+            MenuBarItemManager.diagLog.debug("Skipping relocation for \(candidate.logString) — already in \(effectiveNewItemsSection.logString)")
+            return false
+        }
+
         MenuBarItemManager.diagLog.info(
             "Relocating new item \(candidate.logString) to \(effectiveNewItemsSection.logString)"
         )
