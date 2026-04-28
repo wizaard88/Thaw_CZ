@@ -1533,12 +1533,13 @@ extension MenuBarItemManager {
             return
         }
 
-        await uncheckedCacheItems(items: items, controlItems: controlItems, displayID: displayID)
-
-        // Reset the flag since no restore happened in this cache cycle.
-        // This must be done before the function ends so that saveSectionOrder
-        // can run for future caches.
+        // No restore happened — reset flag so saveSectionOrder can persist
+        // the current cache state (handles user manual moves via Layout Bar
+        // that would otherwise never be recorded).
         isRestoringItemOrder = false
+        isRestoringItemOrderTimestamp = nil
+
+        await uncheckedCacheItems(items: items, controlItems: controlItems, displayID: displayID)
 
         // Detect late-arriving items that belong to the active profile.
         if activeProfileLayout != nil,
@@ -4018,25 +4019,51 @@ extension MenuBarItemManager {
         // multiple apps restart in quick succession (e.g. app update checks).
         guard !lastMoveOperationOccurred(within: .seconds(5)) else { return false }
 
-        // Only restore when previous window IDs have disappeared (app restarted).
-        // This prevents undoing the user's manual section moves on regular cache refreshes.
         let currentWindowIDSet = Set(items.map(\.windowID))
         let previousWindowIDSet = Set(previousWindowIDs)
-        guard !previousWindowIDSet.isEmpty, !previousWindowIDSet.isSubset(of: currentWindowIDSet) else {
-            MenuBarItemManager.diagLog.debug("restoreItemsToSavedSections: no app restart detected (window IDs unchanged), skipping")
-            return false
-        }
 
-        // Get current item tags.
+        // Detect actual window ID changes (some windows disappeared = app restart).
+        let windowIDsChanged = !previousWindowIDSet.isEmpty && !previousWindowIDSet.isSubset(of: currentWindowIDSet)
+
+        // Get current item tags and check if any saved items are present.
         let currentTags = Set(items.map { "\($0.tag.namespace):\($0.tag.title)" })
         let savedTags = Set(savedSectionOrder.values.flatMap(\.self))
         let savedTagsInCurrent = savedTags.intersection(currentTags)
 
-        // Only restore if saved items that were hidden/alwaysHidden are now visible,
-        // or if items moved sections incorrectly after app restart.
-        // Skip if no saved items are currently present (app closed).
         guard !savedTagsInCurrent.isEmpty else {
             MenuBarItemManager.diagLog.debug("restoreItemsToSavedSections: no saved items currently present, skipping")
+            return false
+        }
+
+        // When window IDs haven't changed, scan for items whose current section
+        // differs from their saved section. This handles the case where an app
+        // relaunched with a new window ID spanning two cache passes:
+        //   Pass 1 (terminate): old windowID removed from cachedItemWindowIDs
+        //   Pass 2 (launch):    new windowID appears, guard sees "no restart"
+        //                       because the old ID was already cleaned up.
+        var hasMisplacedItems = false
+        if !windowIDsChanged, !savedSectionOrder.isEmpty {
+            var savedSectionForBaseID = [String: MenuBarSection.Name]()
+            for (sectionKeyString, identifiers) in savedSectionOrder {
+                guard let section = sectionName(for: sectionKeyString) else { continue }
+                for identifier in identifiers {
+                    let baseID = identifier.split(separator: ":", maxSplits: 2).prefix(2).joined(separator: ":")
+                    savedSectionForBaseID[baseID] = section
+                }
+            }
+            var context = CacheContext(controlItems: controlItems, displayID: Bridging.getActiveMenuBarDisplayID())
+            for item in items where !item.isControlItem && item.isMovable && item.canBeHidden && item.tag.instanceIndex == 0 {
+                guard let currentSection = context.findSection(for: item) else { continue }
+                let baseIdentifier = "\(item.tag.namespace):\(item.tag.title)"
+                if let savedSection = savedSectionForBaseID[baseIdentifier], currentSection != savedSection {
+                    hasMisplacedItems = true
+                    break
+                }
+            }
+        }
+
+        guard windowIDsChanged || hasMisplacedItems else {
+            MenuBarItemManager.diagLog.debug("restoreItemsToSavedSections: no app restart detected and no misplaced items, skipping")
             return false
         }
 
