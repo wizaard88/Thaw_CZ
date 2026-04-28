@@ -21,6 +21,7 @@ final class LayoutBarPaddingView: NSView {
     private var notchTrailingConstraint: NSLayoutConstraint?
     private var minWidthConstraint: NSLayoutConstraint?
     private var containerLeadingAfterNotchConstraint: NSLayoutConstraint?
+    private var containerLeadingInsetConstraint: NSLayoutConstraint?
     private var notchObservers = Set<AnyCancellable>()
 
     private func layoutWatchdogDuration() -> Duration? {
@@ -53,10 +54,13 @@ final class LayoutBarPaddingView: NSView {
         addSubview(container)
         self.translatesAutoresizingMaskIntoConstraints = false
 
+        let leadingInsetConstraint = leadingAnchor.constraint(lessThanOrEqualTo: container.leadingAnchor, constant: -7.5)
+        self.containerLeadingInsetConstraint = leadingInsetConstraint
+
         NSLayoutConstraint.activate([
             container.centerYAnchor.constraint(equalTo: centerYAnchor),
             trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: 7.5),
-            leadingAnchor.constraint(lessThanOrEqualTo: container.leadingAnchor, constant: -7.5),
+            leadingInsetConstraint,
         ])
 
         registerForDraggedTypes([.layoutBarItem])
@@ -398,10 +402,11 @@ final class LayoutBarPaddingView: NSView {
         // cosmetic inset that sits between items and the rounded edge.
         let notchTrailingOffset = max(0, screen.frame.maxX - notch.maxX - MenuBarSection.notchGap) + 7.5
         // Bar must always be wide enough to represent the real-world span
-        // from `notch.minX` to `screen.maxX`, plus 7.5pt cosmetic inset on
-        // each side. When the Settings pane is wider, the bar grows past
-        // this and the empty area is shown to the LEFT of the notch.
-        let barMinWidth = max(0, screen.frame.maxX - notch.minX) + 15
+        // from `notch.minX` to `screen.maxX`, with no inset on the left
+        // (the notch itself sits flush) and 7.5pt cosmetic inset on the
+        // right. When the Settings pane is wider, the bar grows past this
+        // and the empty area is shown to the LEFT of the notch.
+        let barMinWidth = max(0, screen.frame.maxX - notch.minX) + 7.5
         let colorInfo = container.appState?.menuBarManager.averageColorInfo
 
         if let notchView {
@@ -410,6 +415,7 @@ final class LayoutBarPaddingView: NSView {
             notchWidthConstraint?.constant = notchIndicatorWidth
             notchTrailingConstraint?.constant = -notchTrailingOffset
             minWidthConstraint?.constant = barMinWidth
+            containerLeadingInsetConstraint?.constant = 0
             return
         }
 
@@ -435,6 +441,7 @@ final class LayoutBarPaddingView: NSView {
         notchTrailingConstraint = trailingConstraint
         containerLeadingAfterNotchConstraint = containerLeading
         minWidthConstraint = minWidth
+        containerLeadingInsetConstraint?.constant = 0
     }
 
     private func tearDownNotchPresentation() {
@@ -446,6 +453,7 @@ final class LayoutBarPaddingView: NSView {
         notchTrailingConstraint = nil
         containerLeadingAfterNotchConstraint = nil
         minWidthConstraint = nil
+        containerLeadingInsetConstraint?.constant = -7.5
         notchView?.removeFromSuperview()
         notchView = nil
     }
