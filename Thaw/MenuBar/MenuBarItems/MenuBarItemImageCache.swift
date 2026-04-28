@@ -509,6 +509,10 @@ final class MenuBarItemImageCache: ObservableObject, @unchecked Sendable {
 
         while !Task.isCancelled {
             let interval = appState.settings.advanced.iconRefreshInterval
+            guard interval > 0 else {
+                try? await Task.sleep(for: .seconds(1))
+                continue
+            }
             let ms = Int(interval * 1000)
             try? await Task.sleep(for: .milliseconds(ms))
             guard !Task.isCancelled else { break }

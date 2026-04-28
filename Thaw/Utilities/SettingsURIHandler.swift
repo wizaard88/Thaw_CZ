@@ -88,7 +88,7 @@ enum SettingsURIHandler {
         "rehideInterval": (1, 300),
         "showOnHoverDelay": (0, 5),
         "tooltipDelay": (0, 5),
-        "iconRefreshInterval": (0.1, 5),
+        "iconRefreshInterval": (0, 5),
     ]
 
     // MARK: - Security

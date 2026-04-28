@@ -220,16 +220,21 @@ struct AdvancedSettingsPane: View {
 
     private var iconRefreshInterval: some View {
         let fpsBinding = Binding<Double>(
-            get: { (1.0 / settings.iconRefreshInterval).rounded() },
-            set: { settings.iconRefreshInterval = 1.0 / $0 }
+            get: {
+                let interval = settings.iconRefreshInterval
+                return interval > 0 ? (1.0 / interval).rounded() : 0
+            },
+            set: { settings.iconRefreshInterval = $0 > 0 ? 1.0 / $0 : 0 }
         )
         return LabeledContent {
             IceSlider(
                 value: fpsBinding,
-                in: 1 ... 30,
+                in: 0 ... 30,
                 step: 1
             ) {
-                Text("\(Int(fpsBinding.wrappedValue)) fps")
+                Text(fpsBinding.wrappedValue > 0
+                    ? "\(Int(fpsBinding.wrappedValue)) fps"
+                    : "Off")
             }
         } label: {
             Text("Icon refresh rate")
