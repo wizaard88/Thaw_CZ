@@ -13,7 +13,9 @@ import Foundation
 enum MouseHelpers {
     private static let diagLog = DiagLog(category: "MouseHelpers")
     private static let cursorLock = DispatchQueue(label: "MouseHelpers.cursorLock")
+    /// Protected by `cursorLock` — all accesses go through `cursorLock.sync`.
     private static nonisolated(unsafe) var cursorHideCount = 0
+    /// Protected by `cursorLock` — all accesses go through `cursorLock.sync`.
     private static nonisolated(unsafe) var autoShowWorkItem: DispatchWorkItem?
     private static let defaultWatchdogTimeout: DispatchTimeInterval = .seconds(1)
 
@@ -38,15 +40,19 @@ enum MouseHelpers {
         let workItem = DispatchWorkItem {
             forceShowCursor(reason: "watchdog timeout")
         }
-        autoShowWorkItem?.cancel()
-        autoShowWorkItem = workItem
+        cursorLock.sync {
+            autoShowWorkItem?.cancel()
+            autoShowWorkItem = workItem
+        }
         diagLog.debug("Cursor watchdog scheduled for \(formattedTimeout(timeout))")
         DispatchQueue.main.asyncAfter(deadline: .now() + timeout, execute: workItem)
     }
 
     private static func cancelAutoShow() {
-        autoShowWorkItem?.cancel()
-        autoShowWorkItem = nil
+        cursorLock.sync {
+            autoShowWorkItem?.cancel()
+            autoShowWorkItem = nil
+        }
     }
 
     private static func forceShowCursor(reason: String) {

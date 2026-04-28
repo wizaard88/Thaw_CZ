@@ -1758,15 +1758,15 @@ extension MenuBarItemManager {
         with stateID: CGEventSourceStateID = .hidSystemState
     ) throws -> CGEventSource {
         enum Context {
-            static nonisolated(unsafe) var cache = [CGEventSourceStateID: CGEventSource]()
+            static let cache = OSAllocatedUnfairLock(initialState: [CGEventSourceStateID: CGEventSource]())
         }
-        if let source = Context.cache[stateID] {
+        if let source = Context.cache.withLock({ $0[stateID] }) {
             return source
         }
         guard let source = CGEventSource(stateID: stateID) else {
             throw EventError.invalidEventSource
         }
-        Context.cache[stateID] = source
+        Context.cache.withLock { $0[stateID] = source }
         return source
     }
 
@@ -1809,7 +1809,7 @@ extension MenuBarItemManager {
         holder.withLock { $0 }
     }
 
-    private struct EventContinuationContext: @unchecked Sendable {
+    private struct EventContinuationContext {
         let event: CGEvent
         let pid: pid_t
         let entryEvent: CGEvent

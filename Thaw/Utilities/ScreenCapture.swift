@@ -49,14 +49,14 @@ enum ScreenCapture {
     /// result with a newly computed value.
     static func cachedCheckPermissions(reset: Bool = false) -> Bool {
         enum Context {
-            static nonisolated(unsafe) var cachedResult: Bool?
+            static let cachedResult = OSAllocatedUnfairLock<Bool?>(initialState: nil)
         }
-        if !reset, let result = Context.cachedResult {
+        if !reset, let result = Context.cachedResult.withLock({ $0 }) {
             return result
         }
         let result = checkPermissions()
-        diagLog.debug("cachedCheckPermissions: computed fresh result = \(result) (reset=\(reset), wasCached=\(Context.cachedResult != nil))")
-        Context.cachedResult = result
+        diagLog.debug("cachedCheckPermissions: computed fresh result = \(result) (reset=\(reset), wasCached=\(Context.cachedResult.withLock { $0 != nil }))")
+        Context.cachedResult.withLock { $0 = result }
         return result
     }
 

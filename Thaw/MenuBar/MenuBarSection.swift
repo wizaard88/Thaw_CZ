@@ -6,6 +6,7 @@
 //  Copyright (Thaw) © 2026 Toni Förster
 //  Licensed under the GNU GPLv3
 
+import os
 import SwiftUI
 
 /// A representation of a section in a menu bar.
@@ -475,11 +476,11 @@ final class MenuBarSection {
             rehideMonitor = EventMonitor.universal(for: .mouseMoved) { [weak self, weak appState] event in
                 // Throttle: process at most ~20fps regardless of mouse polling rate.
                 enum Context {
-                    static nonisolated(unsafe) var lastTime: TimeInterval = 0
+                    static let lastTime = OSAllocatedUnfairLock(initialState: TimeInterval(0))
                 }
                 let now = CACurrentMediaTime()
-                guard now - Context.lastTime > 0.05 else { return event }
-                Context.lastTime = now
+                guard now - Context.lastTime.withLock({ $0 }) > 0.05 else { return event }
+                Context.lastTime.withLock { $0 = now }
 
                 guard
                     let self,
