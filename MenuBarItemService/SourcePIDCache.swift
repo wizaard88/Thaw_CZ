@@ -31,9 +31,13 @@ final class SourcePIDCache {
     /// identifier and extras menu bar.
     private final class CachedApplication: @unchecked Sendable {
         private let runningApp: NSRunningApplication
-        private let lock = NSLock()
-        private var extrasMenuBar: UIElement?
-        private var checkedWithNoResult = false
+
+        private struct State {
+            var extrasMenuBar: UIElement?
+            var checkedWithNoResult = false
+        }
+
+        private let lock = OSAllocatedUnfairLock(initialState: State())
 
         /// The app's process identifier.
         var processIdentifier: pid_t {
@@ -43,7 +47,7 @@ final class SourcePIDCache {
         /// A Boolean value indicating whether the app's extras menu
         /// bar has been successfully created and stored.
         var hasExtrasMenuBar: Bool {
-            lock.withLock { extrasMenuBar != nil }
+            lock.withLock { $0.extrasMenuBar != nil }
         }
 
         /// A Boolean value indicating whether the app is in a valid
@@ -70,7 +74,7 @@ final class SourcePIDCache {
         func getOrCreateExtrasMenuBar() -> UIElement? {
             // Fast path: check cached state under the lock first.
             let (hasCached, isNegative) = lock.withLock {
-                (extrasMenuBar, checkedWithNoResult)
+                ($0.extrasMenuBar, $0.checkedWithNoResult)
             }
             if let bar = hasCached {
                 return bar
@@ -93,13 +97,13 @@ final class SourcePIDCache {
             else {
                 // App is reachable but has no extras menu bar.
                 lock.withLock {
-                    if extrasMenuBar == nil {
-                        checkedWithNoResult = true
+                    if $0.extrasMenuBar == nil {
+                        $0.checkedWithNoResult = true
                     }
                 }
                 return nil
             }
-            lock.withLock { extrasMenuBar = bar }
+            lock.withLock { $0.extrasMenuBar = bar }
             return bar
         }
 
@@ -109,8 +113,8 @@ final class SourcePIDCache {
         /// valid `extrasMenuBar` to avoid unnecessary AX re-queries.
         func resetNegativeCache() {
             lock.withLock {
-                if extrasMenuBar == nil {
-                    checkedWithNoResult = false
+                if $0.extrasMenuBar == nil {
+                    $0.checkedWithNoResult = false
                 }
             }
         }
@@ -146,7 +150,7 @@ final class SourcePIDCache {
     private let state = OSAllocatedUnfairLock(initialState: State())
 
     /// Lock to prevent multiple concurrent full scans of all applications.
-    private let scanLock = NSLock()
+    private let scanLock = OSAllocatedUnfairLock(initialState: ())
 
     /// Observer for running applications.
     private lazy var cancellable: AnyCancellable = {
