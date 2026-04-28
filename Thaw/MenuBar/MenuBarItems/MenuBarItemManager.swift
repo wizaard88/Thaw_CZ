@@ -88,6 +88,16 @@ actor SimpleSemaphore {
             value += 1
         }
     }
+
+    /// Resets the semaphore to a given value, cancelling all pending waiters.
+    /// Use ONLY as a last resort when the semaphore is suspected to be leaked.
+    func reset(to value: Int = 1) {
+        for waiter in waiters {
+            waiter.continuation.resume(throwing: CancellationError())
+        }
+        waiters.removeAll()
+        self.value = value
+    }
 }
 
 /// Manager for menu bar items.
@@ -2387,16 +2397,25 @@ extension MenuBarItemManager {
         on displayID: CGDirectDisplayID,
         warpCursorAfter: Bool = true
     ) async throws {
+        var acquiredSemaphore = false
         do {
             try await eventSemaphore.wait(timeout: .milliseconds(3500))
+            acquiredSemaphore = true
         } catch is SimpleSemaphore.TimeoutError {
-            // wait(timeout:) already restores the semaphore count via cancelWaiter
-            // when it times out — do NOT call signal() here or the semaphore
-            // is over-released and two callers can hold it simultaneously.
             MenuBarItemManager.diagLog.error("eventSemaphore timed out (3.5s) in postMoveEvents")
-            throw EventError.cannotComplete
+            await eventSemaphore.reset(to: 1)
+            do {
+                try await eventSemaphore.wait(timeout: .milliseconds(3500))
+                acquiredSemaphore = true
+            } catch is SimpleSemaphore.TimeoutError {
+                throw EventError.cannotComplete
+            }
         }
-        defer { Task.detached { [eventSemaphore] in await eventSemaphore.signal() } }
+        defer {
+            if acquiredSemaphore {
+                Task.detached { [eventSemaphore] in await eventSemaphore.signal() }
+            }
+        }
 
         // Fast-fail if the target process is dead. CGEvent.tapCreateForPid
         // silently produces an invalid Mach port for dead PIDs, causing every
@@ -2689,16 +2708,26 @@ extension MenuBarItemManager {
     private func postClickEvents(item: MenuBarItem, mouseButton: CGMouseButton) async throws {
         // Try to acquire semaphore with timeout. 3.5 s covers legitimate slow
         // operations (adaptive click cap is 1000 ms × 2 for double mouseUp =
-        // ~2 s of event work plus overhead). wait(timeout:) already restores
-        // the semaphore count via cancelWaiter on timeout — do NOT call
-        // signal() in the catch block or the semaphore is over-released.
+        // ~2 s of event work plus overhead).
+        var acquiredSemaphore = false
         do {
             try await eventSemaphore.wait(timeout: .milliseconds(3500))
+            acquiredSemaphore = true
         } catch is SimpleSemaphore.TimeoutError {
             MenuBarItemManager.diagLog.error("eventSemaphore timed out (3.5s) in postClickEvents for \(item.logString)")
-            throw EventError.cannotComplete
+            await eventSemaphore.reset(to: 1)
+            do {
+                try await eventSemaphore.wait(timeout: .milliseconds(3500))
+                acquiredSemaphore = true
+            } catch is SimpleSemaphore.TimeoutError {
+                throw EventError.cannotComplete
+            }
         }
-        defer { Task.detached { [eventSemaphore] in await eventSemaphore.signal() } }
+        defer {
+            if acquiredSemaphore {
+                Task.detached { [eventSemaphore] in await eventSemaphore.signal() }
+            }
+        }
 
         let clickPoint = try await getCurrentBounds(for: item).center
         let mouseLocation = try getMouseLocation()
@@ -3844,6 +3873,12 @@ extension MenuBarItemManager {
         MenuBarItemManager.diagLog.info(
             "Relocating new item \(candidate.logString) to \(effectiveNewItemsSection.logString)"
         )
+
+        // Skip items with no valid bounds (transient clone windows etc.)
+        guard Bridging.getWindowBounds(for: candidate.windowID) != nil else {
+            MenuBarItemManager.diagLog.warning("Skipping relocation for \(candidate.logString) — no valid bounds, likely transient")
+            return false
+        }
 
         do {
             try await move(
