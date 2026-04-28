@@ -2457,6 +2457,7 @@ extension MenuBarItemManager {
         MenuBarItemManager.diagLog.debug("Move operation timeout: \(timeout)")
 
         lastMoveOperationTimestamp = .now
+        MouseHelpers.warpCursor(to: targetPoints.start)
         MouseHelpers.hideCursor()
         defer {
             if let mouseLocation {
@@ -2730,6 +2731,7 @@ extension MenuBarItemManager {
         }
 
         let clickPoint = try await getCurrentBounds(for: item).center
+
         let mouseLocation = try getMouseLocation()
         let source = try getEventSource()
 
@@ -2758,6 +2760,13 @@ extension MenuBarItemManager {
             throw EventError.eventCreationFailure(item)
         }
 
+        // Warp the cursor to the click point so the Window Server's hit-test
+        // matches the event coordinates rather than the cursor's current position.
+        MouseHelpers.warpCursor(to: clickPoint)
+        // Small delay to let the Window Server process the warp before posting
+        // the event. Without this, the event can be routed using the cursor's
+        // old position (e.g. the Apple menu) instead of the warped target.
+        try await Task.sleep(for: .milliseconds(10))
         MouseHelpers.hideCursor()
         defer {
             MouseHelpers.warpCursor(to: mouseLocation)
