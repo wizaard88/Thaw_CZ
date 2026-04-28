@@ -188,8 +188,7 @@ private struct MenuBarFullShapePicker: View, @preconcurrency Equatable {
     }
 
     static func == (lhs: Self, rhs: Self) -> Bool {
-        lhs.colorScheme == rhs.colorScheme &&
-            lhs.info == rhs.info &&
+        lhs.info == rhs.info &&
             lhs.leftMargin == rhs.leftMargin &&
             lhs.rightMargin == rhs.rightMargin
     }
