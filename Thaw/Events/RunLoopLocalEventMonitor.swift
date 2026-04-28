@@ -109,7 +109,7 @@ extension RunLoopLocalEventMonitor {
         let mask: NSEvent.EventTypeMask
         let mode: RunLoop.Mode
 
-        func receive(subscriber: some Subscriber<Output, Failure>) {
+        func receive(subscriber: some Subscriber<Output, Failure> & Sendable) {
             let subscription = RunLoopLocalEventSubscription(mask: mask, mode: mode, subscriber: subscriber)
             subscriber.receive(subscription: subscription)
         }
@@ -121,7 +121,7 @@ extension RunLoopLocalEventMonitor {
 }
 
 extension RunLoopLocalEventMonitor.RunLoopLocalEventPublisher {
-    private final class RunLoopLocalEventSubscription<S: Subscriber<Output, Failure>>: Subscription, @unchecked Sendable {
+    private final class RunLoopLocalEventSubscription<S: Subscriber<Output, Failure> & Sendable>: Subscription, @unchecked Sendable {
         let mask: NSEvent.EventTypeMask
         let mode: RunLoop.Mode
         private var subscriber: S?
