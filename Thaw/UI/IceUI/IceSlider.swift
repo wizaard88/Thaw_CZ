@@ -105,7 +105,7 @@ struct IceSlider<Value: BinaryFloatingPoint, ValueLabel: View>: View {
                 borderShape.strokeBorder(.separator, lineWidth: 0.5)
             )
             .compactSliderHandleStyle(.hidden())
-            .compactSliderScale(alignment: .top)
+            .compactSliderScale(alignment: .top, lineLength: 6)
             .compactSliderOptionsByAdding(.tapToSlide, .snapToSteps)
             .compactSliderProgress { configuration in
                 Rectangle().fill(
