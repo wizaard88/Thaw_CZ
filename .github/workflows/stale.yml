@@ -15,8 +15,8 @@ jobs:
       - uses: actions/stale@v10
         with:
           operations-per-run: 100
-          days-before-stale: 30
-          days-before-close: 4
+          days-before-stale: 21
+          days-before-close: 7
           days-before-pr-stale: -1
           days-before-pr-close: -1
           stale-issue-label: "stale"
