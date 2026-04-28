@@ -96,7 +96,7 @@ struct IceSlider<Value: BinaryFloatingPoint, ValueLabel: View>: View {
                 }
                 .padding(.horizontal, 8)
                 .frame(height: height)
-                .opacity(isLabelActive ? 1 : 0.65)
+                .opacity(isLabelActive ? 0.65 : 0.45)
                 .animation(.easeInOut(duration: 0.15), value: isLabelActive)
                 .allowsHitTesting(false)
             }
