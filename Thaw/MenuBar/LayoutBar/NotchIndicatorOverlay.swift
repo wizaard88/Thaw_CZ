@@ -58,15 +58,15 @@ private struct NotchIndicatorContent: View {
     var body: some View {
         ZStack {
             DiagonalStripes(color: stripeColor)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
                 .padding(3)
 
-            RoundedRectangle(cornerRadius: 6)
+            RoundedRectangle(cornerRadius: 9, style: .continuous)
                 .strokeBorder(borderColor, lineWidth: 1)
                 .padding(3)
 
             Text("Notch")
-                .font(.system(size: 9, weight: .semibold))
+                .font(.footnote)
                 .foregroundStyle(textColor)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
