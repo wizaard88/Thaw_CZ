@@ -582,7 +582,7 @@ private struct IceBarContentView: View {
                         let rows = stride(from: 0, to: items.count, by: gridColumns).map { start in
                             Array(items[start ..< Swift.min(start + gridColumns, items.count)])
                         }
-                        ForEach(Array(rows.enumerated()), id: \.offset) { _, rowItems in
+                        ForEach(Array(rows.enumerated()), id: \.offset) { rowIndex, rowItems in
                             HStack(spacing: 0) {
                                 ForEach(rowItems, id: \.windowID) { item in
                                     IceBarItemView(
@@ -598,9 +598,13 @@ private struct IceBarContentView: View {
                                     )
                                     .frame(width: maxItemWidth, alignment: .center)
                                 }
-                                ForEach(0 ..< (gridColumns - rowItems.count), id: \.self) { _ in
-                                    Color.clear
-                                        .frame(width: maxItemWidth, height: contentHeight)
+                                // Only pad the last row when there are multiple rows,
+                                // so partial rows align with the columns above.
+                                if rows.count > 1, rowIndex == rows.count - 1, rowItems.count < gridColumns {
+                                    ForEach(0 ..< (gridColumns - rowItems.count), id: \.self) { _ in
+                                        Color.clear
+                                            .frame(width: maxItemWidth, height: contentHeight)
+                                    }
                                 }
                             }
                             .frame(height: contentHeight)
