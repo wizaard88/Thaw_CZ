@@ -451,12 +451,8 @@ private struct IceBarContentView: View {
             HStack {
                 if cacheGracePeriodActive {
                     Text("Loading menu bar items…")
-                    ProgressView()
-                        .controlSize(.small)
                 } else if !loadingTimedOut {
                     Text("No items in this section")
-                    ProgressView()
-                        .controlSize(.small)
                 } else {
                     Text("No items in this section")
                 }
@@ -484,8 +480,6 @@ private struct IceBarContentView: View {
                     .foregroundStyle(.link)
                 } else {
                     Text("Loading menu bar items…")
-                    ProgressView()
-                        .controlSize(.small)
                 }
             }
             .padding(.horizontal, 10)
@@ -499,8 +493,6 @@ private struct IceBarContentView: View {
             HStack {
                 if cacheGracePeriodActive {
                     Text("Loading menu bar items…")
-                    ProgressView()
-                        .controlSize(.small)
                 } else if loadingTimedOut {
                     // Final state: no further automatic retry.
                     Text("Unable to display menu bar items")
@@ -513,8 +505,6 @@ private struct IceBarContentView: View {
                     .foregroundStyle(.link)
                 } else {
                     Text("Loading menu bar items…")
-                    ProgressView()
-                        .controlSize(.small)
                 }
             }
             .padding(.horizontal, 10)
