@@ -250,19 +250,33 @@ final class MenuBarOverlayPanel: NSPanel, @unchecked Sendable {
                 timeout: .seconds(10)
             ) { @MainActor [weak self] in
                 var candidate: CGRect?
-                for _ in 0 ..< 10 {
-                    try Task.checkCancellation()
+                var settledCount = 0
+                for i in 0 ..< 10 {
+                    do {
+                        try Task.checkCancellation()
+                    } catch {
+                        return
+                    }
                     guard let self else { return }
                     let latest = self.owningScreen
                         .getApplicationMenuFrame(bypassCache: true)
-                    if let latest {
-                        if latest == candidate {
-                            self.insertUpdateFlag(.applicationMenuFrame)
-                            break
-                        }
-                        candidate = latest
+                    guard let latest else { continue }
+                    let isFirst = i == 0
+                    var changed = true
+                    if let c = candidate {
+                        changed = latest != c
                     }
-                    try await Task.sleep(for: .milliseconds(50))
+                    if isFirst || changed {
+                        self.applicationMenuFrame = latest
+                        candidate = latest
+                        settledCount = 0
+                    } else {
+                        settledCount += 1
+                        if settledCount >= 3 {
+                            return
+                        }
+                    }
+                    try? await Task.sleep(for: .milliseconds(100))
                 }
             }
             Task {
@@ -650,12 +664,12 @@ private final class MenuBarOverlayPanelContentView: NSView {
                     settledCount = 0
                 } else {
                     settledCount += 1
-                    if settledCount >= 2 {
+                    if settledCount >= 3 {
                         // Stable for 2 consecutive reads — done.
                         return
                     }
                 }
-                try? await Task.sleep(for: .milliseconds(50))
+                try? await Task.sleep(for: .milliseconds(100))
             }
             // Exhausted retries — commit last value if not already settled.
             if let candidate {
