@@ -55,6 +55,8 @@ enum SettingsURIHandler {
         "useIceBar",
         "iceBarLocation",
         "alwaysShowHiddenItems",
+        "iceBarLayout",
+        "gridColumns",
     ]
 
     /// Mapping of URI key names to Defaults.Key enum cases
@@ -465,6 +467,25 @@ enum SettingsURIHandler {
             diagLog.info("Settings URI: Set alwaysShowHiddenItems = \(boolValue) on all non-IceBar displays")
             return true
 
+        case "iceBarLayout":
+            guard let layout = IceBarLayout.fromString(value) else {
+                diagLog.warning("Settings URI: Invalid iceBarLayout value '\(value)'. Valid: horizontal, vertical, grid (or 0, 1, 2)")
+                return false
+            }
+            postPerDisplaySettingsDidChangeNotification(key: key, stringValue: String(layout.rawValue), scope: .allEnabledDisplays)
+            diagLog.info("Settings URI: Set iceBarLayout = \(layout) on all enabled displays")
+            return true
+
+        case "gridColumns":
+            guard let intValue = Int(value) else {
+                diagLog.warning("Settings URI: Invalid gridColumns value '\(value)'")
+                return false
+            }
+            let clamped = Swift.max(2, Swift.min(intValue, 10))
+            postPerDisplaySettingsDidChangeNotification(key: key, stringValue: String(clamped), scope: .allEnabledDisplays)
+            diagLog.info("Settings URI: Set gridColumns = \(clamped) on all enabled displays")
+            return true
+
         default:
             return false
         }
@@ -514,6 +535,25 @@ enum SettingsURIHandler {
             // Post notification for specific display
             postPerDisplaySettingsDidChangeNotification(key: key, value: boolValue, scope: .specificDisplay(uuid: displayUUID))
             diagLog.info("Settings URI: Set alwaysShowHiddenItems = \(boolValue) on display \(displayUUID)")
+            return true
+
+        case "iceBarLayout":
+            guard let layout = IceBarLayout.fromString(value) else {
+                diagLog.warning("Settings URI: Invalid iceBarLayout value '\(value)'. Valid: horizontal, vertical, grid (or 0, 1, 2)")
+                return false
+            }
+            postPerDisplaySettingsDidChangeNotification(key: key, stringValue: String(layout.rawValue), scope: .specificDisplay(uuid: displayUUID))
+            diagLog.info("Settings URI: Set iceBarLayout = \(layout) on display \(displayUUID)")
+            return true
+
+        case "gridColumns":
+            guard let intValue = Int(value) else {
+                diagLog.warning("Settings URI: Invalid gridColumns value '\(value)'")
+                return false
+            }
+            let clamped = Swift.max(2, Swift.min(intValue, 10))
+            postPerDisplaySettingsDidChangeNotification(key: key, stringValue: String(clamped), scope: .specificDisplay(uuid: displayUUID))
+            diagLog.info("Settings URI: Set gridColumns = \(clamped) on display \(displayUUID)")
             return true
 
         default:
@@ -818,6 +858,19 @@ enum SettingsURIHandler {
                     "value": config.alwaysShowHiddenItems,
                     "type": "boolean",
                 ]
+            case "iceBarLayout":
+                return [
+                    "value": String(describing: config.iceBarLayout),
+                    "rawValue": config.iceBarLayout.rawValue,
+                    "type": "enum",
+                    "validValues": ["horizontal": 0, "vertical": 1, "grid": 2],
+                ]
+            case "gridColumns":
+                return [
+                    "value": config.gridColumns,
+                    "type": "integer",
+                    "range": ["min": 2, "max": 10],
+                ]
             default:
                 return nil
             }
@@ -960,6 +1013,8 @@ enum SettingsURIHandler {
             "useIceBar": config.useIceBar,
             "iceBarLocation": String(describing: config.iceBarLocation),
             "alwaysShowHiddenItems": config.alwaysShowHiddenItems,
+            "iceBarLayout": String(describing: config.iceBarLayout),
+            "gridColumns": config.gridColumns,
         ]
     }
 
@@ -1013,6 +1068,8 @@ enum SettingsURIHandler {
                     "useIceBar": config.useIceBar,
                     "iceBarLocation": String(describing: config.iceBarLocation),
                     "alwaysShowHiddenItems": config.alwaysShowHiddenItems,
+                    "iceBarLayout": String(describing: config.iceBarLayout),
+                    "gridColumns": config.gridColumns,
                 ],
             ]
         }

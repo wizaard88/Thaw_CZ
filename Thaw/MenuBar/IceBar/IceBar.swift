@@ -303,6 +303,18 @@ private struct IceBarContentView: View {
         appState.appearanceManager.configuration
     }
 
+    private var displaySettings: DisplaySettingsManager {
+        appState.settings.displaySettings
+    }
+
+    private var layout: IceBarLayout {
+        displaySettings.configuration(for: screen.displayID).iceBarLayout
+    }
+
+    private var gridColumns: Int {
+        displaySettings.configuration(for: screen.displayID).gridColumns
+    }
+
     private var horizontalPadding: CGFloat {
         3
     }
@@ -327,23 +339,64 @@ private struct IceBarContentView: View {
         return menuBarHeight > 0 ? menuBarHeight : nil
     }
 
+    /// The maximum rendered width of any item in the current section,
+    /// including the 6pt horizontal padding applied in ``IceBarItemView``.
+    private var maxItemWidth: CGFloat {
+        guard let maxHeight = itemMaxHeight, maxHeight > 0 else { return 0 }
+        let widths = items.compactMap { item -> CGFloat? in
+            guard let cachedImage = imageCache.images[item.tag] else { return nil }
+            let image = cachedImage.nsImage
+            guard image.size.height > 0 else { return image.size.width + 6 }
+            let scale = maxHeight / image.size.height
+            return image.size.width * scale + 6
+        }
+        return widths.max() ?? maxHeight
+    }
+
+    /// Maximum content height for vertical and grid layouts so the panel
+    /// does not extend below the visible screen area.
+    private var maxContentHeight: CGFloat {
+        let menuBarHeight = screen.getMenuBarHeightEstimate()
+        let available = (screen.frame.maxY - menuBarHeight) - screen.visibleFrame.minY
+        let totalPadding: CGFloat = 10 + verticalPadding * 2
+        return max(available - totalPadding, contentHeight)
+    }
+
+    /// Total intrinsic height of all items/rows for the current layout.
+    private var totalContentHeight: CGFloat {
+        switch layout {
+        case .horizontal:
+            return contentHeight
+        case .vertical:
+            return CGFloat(items.count) * contentHeight
+        case .grid:
+            let rowCount = Int(ceil(Double(items.count) / Double(gridColumns)))
+            return CGFloat(rowCount) * contentHeight
+        }
+    }
+
     private var clipShape: some InsettableShape {
         if configuration.hasRoundedShape {
-            RoundedRectangle(cornerRadius: frame.height / 2, style: .circular)
+            RoundedRectangle(cornerRadius: contentHeight / 2, style: .circular)
         } else {
-            RoundedRectangle(cornerRadius: frame.height / 4, style: .continuous)
+            RoundedRectangle(cornerRadius: contentHeight / 4, style: .continuous)
         }
     }
 
     var body: some View {
         ZStack {
-            content
-                .frame(height: contentHeight)
-                .padding(.horizontal, horizontalPadding)
-                .padding(.vertical, verticalPadding)
-                .menuBarItemContainer(appState: appState, colorInfo: colorManager.colorInfo)
-                .foregroundStyle(colorManager.colorInfo?.isBright(for: screen) == true ? .black : .white)
-                .clipShape(clipShape)
+            Group {
+                if layout == .horizontal {
+                    content.frame(height: contentHeight)
+                } else {
+                    content.frame(height: min(totalContentHeight, maxContentHeight))
+                }
+            }
+            .padding(.horizontal, horizontalPadding)
+            .padding(.vertical, verticalPadding)
+            .menuBarItemContainer(appState: appState, colorInfo: colorManager.colorInfo)
+            .foregroundStyle(colorManager.colorInfo?.isBright(for: screen) == true ? .black : .white)
+            .clipShape(clipShape)
 
             if configuration.current.hasBorder {
                 clipShape
@@ -354,7 +407,7 @@ private struct IceBarContentView: View {
         }
         .padding(5)
         .frame(maxWidth: screen.frame.width)
-        .fixedSize()
+        .fixedSize(horizontal: true, vertical: layout == .horizontal)
         .onFrameChange(update: $frame)
         .task(id: section) {
             cacheGracePeriodActive = true
@@ -472,30 +525,92 @@ private struct IceBarContentView: View {
                 Self.diagLog.warning("IceBar content: showing '\(self.cacheGracePeriodActive ? "Loading…" : "Unable to display")' for section \(self.section.logString) — imageCache.cacheFailed=true (grace period active: \(self.cacheGracePeriodActive), loadingTimedOut: \(self.loadingTimedOut), cached images count: \(self.imageCache.images.count), items in section: \(self.itemManager.itemCache[self.section].count))")
             }
         } else {
-            ScrollView(.horizontal) {
-                HStack(spacing: 0) {
-                    let isLightBackground = colorManager.colorInfo?.isBright(for: screen) == true
-                    ForEach(items, id: \.windowID) { item in
-                        IceBarItemView(
-                            imageCache: imageCache,
-                            itemManager: itemManager,
-                            menuBarManager: menuBarManager,
-                            item: item,
-                            section: section,
-                            displayID: screen.displayID,
-                            maxHeight: itemMaxHeight,
-                            tooltipDelay: appState.settings.advanced.tooltipDelay,
-                            isLightBackground: isLightBackground
-                        )
+            let isLightBackground = colorManager.colorInfo?.isBright(for: screen) == true
+            switch layout {
+            case .horizontal:
+                ScrollView(.horizontal) {
+                    HStack(spacing: 0) {
+                        ForEach(items, id: \.windowID) { item in
+                            IceBarItemView(
+                                imageCache: imageCache,
+                                itemManager: itemManager,
+                                menuBarManager: menuBarManager,
+                                item: item,
+                                section: section,
+                                displayID: screen.displayID,
+                                maxHeight: itemMaxHeight,
+                                tooltipDelay: appState.settings.advanced.tooltipDelay,
+                                isLightBackground: isLightBackground
+                            )
+                        }
+                    }
+                    .frame(height: contentHeight)
+                }
+                .environment(\.isScrollEnabled, frame.width == screen.frame.width)
+                .defaultScrollAnchor(.trailing)
+                .scrollIndicatorsFlash(trigger: scrollIndicatorsFlashTrigger)
+                .task {
+                    scrollIndicatorsFlashTrigger += 1
+                }
+
+            case .vertical:
+                ScrollView(.vertical) {
+                    VStack(spacing: 0) {
+                        ForEach(items, id: \.windowID) { item in
+                            IceBarItemView(
+                                imageCache: imageCache,
+                                itemManager: itemManager,
+                                menuBarManager: menuBarManager,
+                                item: item,
+                                section: section,
+                                displayID: screen.displayID,
+                                maxHeight: itemMaxHeight,
+                                tooltipDelay: appState.settings.advanced.tooltipDelay,
+                                isLightBackground: isLightBackground
+                            )
+                        }
                     }
                 }
-                .frame(height: contentHeight)
-            }
-            .environment(\.isScrollEnabled, frame.width == screen.frame.width)
-            .defaultScrollAnchor(.trailing)
-            .scrollIndicatorsFlash(trigger: scrollIndicatorsFlashTrigger)
-            .task {
-                scrollIndicatorsFlashTrigger += 1
+                .scrollIndicatorsFlash(trigger: scrollIndicatorsFlashTrigger)
+                .task {
+                    scrollIndicatorsFlashTrigger += 1
+                }
+
+            case .grid:
+                ScrollView(.vertical) {
+                    VStack(spacing: 0) {
+                        let rows = stride(from: 0, to: items.count, by: gridColumns).map { start in
+                            Array(items[start ..< Swift.min(start + gridColumns, items.count)])
+                        }
+                        ForEach(Array(rows.enumerated()), id: \.offset) { _, rowItems in
+                            HStack(spacing: 0) {
+                                ForEach(rowItems, id: \.windowID) { item in
+                                    IceBarItemView(
+                                        imageCache: imageCache,
+                                        itemManager: itemManager,
+                                        menuBarManager: menuBarManager,
+                                        item: item,
+                                        section: section,
+                                        displayID: screen.displayID,
+                                        maxHeight: itemMaxHeight,
+                                        tooltipDelay: appState.settings.advanced.tooltipDelay,
+                                        isLightBackground: isLightBackground
+                                    )
+                                    .frame(width: maxItemWidth, alignment: .center)
+                                }
+                                ForEach(0 ..< (gridColumns - rowItems.count), id: \.self) { _ in
+                                    Color.clear
+                                        .frame(width: maxItemWidth, height: contentHeight)
+                                }
+                            }
+                            .frame(height: contentHeight)
+                        }
+                    }
+                }
+                .scrollIndicatorsFlash(trigger: scrollIndicatorsFlashTrigger)
+                .task {
+                    scrollIndicatorsFlashTrigger += 1
+                }
             }
         }
     }

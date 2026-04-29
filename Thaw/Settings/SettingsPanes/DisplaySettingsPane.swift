@@ -11,6 +11,8 @@ import SwiftUI
 struct DisplaySettingsPane: View {
     @ObservedObject var displaySettings: DisplaySettingsManager
 
+    @State private var maxSliderLabelWidth: CGFloat = 0
+
     var body: some View {
         IceForm {
             ForEach(displaySettings.connectedDisplays()) { display in
@@ -46,6 +48,24 @@ struct DisplaySettingsPane: View {
             set: { newValue in
                 displaySettings.updateConfiguration(forDisplayUUID: display.id) { config in
                     config.withAlwaysShowHiddenItems(newValue)
+                }
+            }
+        )
+
+        let layout = Binding<IceBarLayout>(
+            get: { displaySettings.configuration(for: display.displayID).iceBarLayout },
+            set: { newValue in
+                displaySettings.updateConfiguration(forDisplayUUID: display.id) { config in
+                    config.withIceBarLayout(newValue)
+                }
+            }
+        )
+
+        let gridColumns = Binding<Int>(
+            get: { displaySettings.configuration(for: display.displayID).gridColumns },
+            set: { newValue in
+                displaySettings.updateConfiguration(forDisplayUUID: display.id) { config in
+                    config.withGridColumns(newValue)
                 }
             }
         )
@@ -93,6 +113,45 @@ struct DisplaySettingsPane: View {
                 case .iceIcon:
                     Text("The \(Constants.displayName) Bar is centered below the \(Constants.displayName) icon.")
                 }
+            }
+
+            IcePicker("Layout", selection: layout) {
+                ForEach(IceBarLayout.allCases) { lay in
+                    Text(lay.localized).tag(lay)
+                }
+            }
+            .annotation {
+                switch layout.wrappedValue {
+                case .horizontal:
+                    Text("Items are arranged in a single horizontal row.")
+                case .vertical:
+                    Text("Items are stacked vertically in a single column.")
+                case .grid:
+                    Text("Items are arranged in a grid with multiple columns.")
+                }
+            }
+
+            if layout.wrappedValue == .grid {
+                let gridColumnsDouble = Binding<Double>(
+                    get: { Double(gridColumns.wrappedValue) },
+                    set: { gridColumns.wrappedValue = Int($0) }
+                )
+                LabeledContent {
+                    IceSlider(
+                        value: gridColumnsDouble,
+                        in: 2 ... 10,
+                        step: 1
+                    ) {
+                        Text("\(gridColumns.wrappedValue)")
+                    }
+                } label: {
+                    Text("Columns")
+                        .frame(minWidth: maxSliderLabelWidth, alignment: .leading)
+                        .onFrameChange { frame in
+                            maxSliderLabelWidth = max(maxSliderLabelWidth, frame.width)
+                        }
+                }
+                .annotation("Maximum number of items per row in the grid layout.")
             }
         }
     }

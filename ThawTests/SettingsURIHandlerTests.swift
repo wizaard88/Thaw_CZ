@@ -55,6 +55,8 @@ final class SettingsURIHandlerTests: XCTestCase {
         XCTAssertTrue(keys.contains("useIceBar"))
         XCTAssertTrue(keys.contains("iceBarLocation"))
         XCTAssertTrue(keys.contains("alwaysShowHiddenItems"))
+        XCTAssertTrue(keys.contains("iceBarLayout"))
+        XCTAssertTrue(keys.contains("gridColumns"))
     }
 
     // MARK: - isValidSettingsKey() Tests
@@ -79,6 +81,8 @@ final class SettingsURIHandlerTests: XCTestCase {
         XCTAssertTrue(SettingsURIHandler.isValidSettingsKey("useIceBar"))
         XCTAssertTrue(SettingsURIHandler.isValidSettingsKey("iceBarLocation"))
         XCTAssertTrue(SettingsURIHandler.isValidSettingsKey("alwaysShowHiddenItems"))
+        XCTAssertTrue(SettingsURIHandler.isValidSettingsKey("iceBarLayout"))
+        XCTAssertTrue(SettingsURIHandler.isValidSettingsKey("gridColumns"))
     }
 
     func testIsValidSettingsKeyWithUnknownKey() {

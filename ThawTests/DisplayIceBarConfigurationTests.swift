@@ -18,6 +18,8 @@ final class DisplayIceBarConfigurationTests: XCTestCase {
         XCTAssertFalse(config.useIceBar)
         XCTAssertEqual(config.iceBarLocation, .dynamic)
         XCTAssertFalse(config.alwaysShowHiddenItems)
+        XCTAssertEqual(config.iceBarLayout, .horizontal)
+        XCTAssertEqual(config.gridColumns, 4)
     }
 
     // MARK: - Initialization Tests
@@ -26,12 +28,16 @@ final class DisplayIceBarConfigurationTests: XCTestCase {
         let config = DisplayIceBarConfiguration(
             useIceBar: true,
             iceBarLocation: .mousePointer,
-            alwaysShowHiddenItems: true
+            alwaysShowHiddenItems: true,
+            iceBarLayout: .grid,
+            gridColumns: 6
         )
 
         XCTAssertTrue(config.useIceBar)
         XCTAssertEqual(config.iceBarLocation, .mousePointer)
         XCTAssertTrue(config.alwaysShowHiddenItems)
+        XCTAssertEqual(config.iceBarLayout, .grid)
+        XCTAssertEqual(config.gridColumns, 6)
     }
 
     // MARK: - With Methods Tests
@@ -43,6 +49,8 @@ final class DisplayIceBarConfigurationTests: XCTestCase {
         XCTAssertTrue(modified.useIceBar)
         XCTAssertEqual(modified.iceBarLocation, original.iceBarLocation)
         XCTAssertEqual(modified.alwaysShowHiddenItems, original.alwaysShowHiddenItems)
+        XCTAssertEqual(modified.iceBarLayout, original.iceBarLayout)
+        XCTAssertEqual(modified.gridColumns, original.gridColumns)
     }
 
     func testWithUseIceBarDoesNotMutateOriginal() {
@@ -59,6 +67,8 @@ final class DisplayIceBarConfigurationTests: XCTestCase {
         XCTAssertEqual(modified.iceBarLocation, .iceIcon)
         XCTAssertEqual(modified.useIceBar, original.useIceBar)
         XCTAssertEqual(modified.alwaysShowHiddenItems, original.alwaysShowHiddenItems)
+        XCTAssertEqual(modified.iceBarLayout, original.iceBarLayout)
+        XCTAssertEqual(modified.gridColumns, original.gridColumns)
     }
 
     func testWithIceBarLocationDoesNotMutateOriginal() {
@@ -75,6 +85,8 @@ final class DisplayIceBarConfigurationTests: XCTestCase {
         XCTAssertTrue(modified.alwaysShowHiddenItems)
         XCTAssertEqual(modified.useIceBar, original.useIceBar)
         XCTAssertEqual(modified.iceBarLocation, original.iceBarLocation)
+        XCTAssertEqual(modified.iceBarLayout, original.iceBarLayout)
+        XCTAssertEqual(modified.gridColumns, original.gridColumns)
     }
 
     func testWithAlwaysShowHiddenItemsDoesNotMutateOriginal() {
@@ -84,6 +96,55 @@ final class DisplayIceBarConfigurationTests: XCTestCase {
         XCTAssertFalse(original.alwaysShowHiddenItems)
     }
 
+    func testWithIceBarLayout() {
+        let original = DisplayIceBarConfiguration.defaultConfiguration
+        let modified = original.withIceBarLayout(.vertical)
+
+        XCTAssertEqual(modified.iceBarLayout, .vertical)
+        XCTAssertEqual(modified.useIceBar, original.useIceBar)
+        XCTAssertEqual(modified.iceBarLocation, original.iceBarLocation)
+        XCTAssertEqual(modified.alwaysShowHiddenItems, original.alwaysShowHiddenItems)
+        XCTAssertEqual(modified.gridColumns, original.gridColumns)
+    }
+
+    func testWithIceBarLayoutDoesNotMutateOriginal() {
+        let original = DisplayIceBarConfiguration.defaultConfiguration
+        _ = original.withIceBarLayout(.grid)
+
+        XCTAssertEqual(original.iceBarLayout, .horizontal)
+    }
+
+    func testWithGridColumns() {
+        let original = DisplayIceBarConfiguration.defaultConfiguration
+        let modified = original.withGridColumns(8)
+
+        XCTAssertEqual(modified.gridColumns, 8)
+        XCTAssertEqual(modified.useIceBar, original.useIceBar)
+        XCTAssertEqual(modified.iceBarLocation, original.iceBarLocation)
+        XCTAssertEqual(modified.alwaysShowHiddenItems, original.alwaysShowHiddenItems)
+        XCTAssertEqual(modified.iceBarLayout, original.iceBarLayout)
+    }
+
+    func testWithGridColumnsClamping() {
+        let original = DisplayIceBarConfiguration.defaultConfiguration
+
+        let tooLow = original.withGridColumns(0)
+        XCTAssertEqual(tooLow.gridColumns, 2)
+
+        let tooHigh = original.withGridColumns(20)
+        XCTAssertEqual(tooHigh.gridColumns, 10)
+
+        let normal = original.withGridColumns(5)
+        XCTAssertEqual(normal.gridColumns, 5)
+    }
+
+    func testWithGridColumnsDoesNotMutateOriginal() {
+        let original = DisplayIceBarConfiguration.defaultConfiguration
+        _ = original.withGridColumns(7)
+
+        XCTAssertEqual(original.gridColumns, 4)
+    }
+
     // MARK: - Chained With Methods
 
     func testChainedWithMethods() {
@@ -91,10 +152,14 @@ final class DisplayIceBarConfigurationTests: XCTestCase {
             .withUseIceBar(true)
             .withIceBarLocation(.iceIcon)
             .withAlwaysShowHiddenItems(true)
+            .withIceBarLayout(.grid)
+            .withGridColumns(5)
 
         XCTAssertTrue(config.useIceBar)
         XCTAssertEqual(config.iceBarLocation, .iceIcon)
         XCTAssertTrue(config.alwaysShowHiddenItems)
+        XCTAssertEqual(config.iceBarLayout, .grid)
+        XCTAssertEqual(config.gridColumns, 5)
     }
 
     // MARK: - Equatable Tests
@@ -103,12 +168,16 @@ final class DisplayIceBarConfigurationTests: XCTestCase {
         let config1 = DisplayIceBarConfiguration(
             useIceBar: true,
             iceBarLocation: .mousePointer,
-            alwaysShowHiddenItems: false
+            alwaysShowHiddenItems: false,
+            iceBarLayout: .vertical,
+            gridColumns: 3
         )
         let config2 = DisplayIceBarConfiguration(
             useIceBar: true,
             iceBarLocation: .mousePointer,
-            alwaysShowHiddenItems: false
+            alwaysShowHiddenItems: false,
+            iceBarLayout: .vertical,
+            gridColumns: 3
         )
 
         XCTAssertEqual(config1, config2)
@@ -135,13 +204,29 @@ final class DisplayIceBarConfigurationTests: XCTestCase {
         XCTAssertNotEqual(config1, config2)
     }
 
+    func testEquatableDifferentLayout() {
+        let config1 = DisplayIceBarConfiguration.defaultConfiguration
+        let config2 = config1.withIceBarLayout(.grid)
+
+        XCTAssertNotEqual(config1, config2)
+    }
+
+    func testEquatableDifferentGridColumns() {
+        let config1 = DisplayIceBarConfiguration.defaultConfiguration
+        let config2 = config1.withGridColumns(6)
+
+        XCTAssertNotEqual(config1, config2)
+    }
+
     // MARK: - Codable Tests
 
     func testEncodeDecode() throws {
         let original = DisplayIceBarConfiguration(
             useIceBar: true,
             iceBarLocation: .iceIcon,
-            alwaysShowHiddenItems: true
+            alwaysShowHiddenItems: true,
+            iceBarLayout: .grid,
+            gridColumns: 6
         )
 
         let encoder = JSONEncoder()
@@ -170,7 +255,9 @@ final class DisplayIceBarConfigurationTests: XCTestCase {
         {
             "useIceBar": true,
             "iceBarLocation": 2,
-            "alwaysShowHiddenItems": false
+            "alwaysShowHiddenItems": false,
+            "iceBarLayout": 2,
+            "gridColumns": 5
         }
         """.data(using: .utf8)!
 
@@ -180,6 +267,44 @@ final class DisplayIceBarConfigurationTests: XCTestCase {
         XCTAssertTrue(decoded.useIceBar)
         XCTAssertEqual(decoded.iceBarLocation, .iceIcon)
         XCTAssertFalse(decoded.alwaysShowHiddenItems)
+        XCTAssertEqual(decoded.iceBarLayout, .grid)
+        XCTAssertEqual(decoded.gridColumns, 5)
+    }
+
+    func testDecodeOldJSONWithoutNewFields() throws {
+        let json = """
+        {
+            "useIceBar": true,
+            "iceBarLocation": 1,
+            "alwaysShowHiddenItems": false
+        }
+        """.data(using: .utf8)!
+
+        let decoder = JSONDecoder()
+        let decoded = try decoder.decode(DisplayIceBarConfiguration.self, from: json)
+
+        XCTAssertTrue(decoded.useIceBar)
+        XCTAssertEqual(decoded.iceBarLocation, .mousePointer)
+        XCTAssertFalse(decoded.alwaysShowHiddenItems)
+        XCTAssertEqual(decoded.iceBarLayout, .horizontal)
+        XCTAssertEqual(decoded.gridColumns, 4)
+    }
+
+    func testDecodeOldJSONWithInvalidGridColumns() throws {
+        let json = """
+        {
+            "useIceBar": false,
+            "iceBarLocation": 0,
+            "alwaysShowHiddenItems": false,
+            "iceBarLayout": 1,
+            "gridColumns": 50
+        }
+        """.data(using: .utf8)!
+
+        let decoder = JSONDecoder()
+        let decoded = try decoder.decode(DisplayIceBarConfiguration.self, from: json)
+
+        XCTAssertEqual(decoded.gridColumns, 10)
     }
 
     // MARK: - All Locations Tests
@@ -188,6 +313,15 @@ final class DisplayIceBarConfigurationTests: XCTestCase {
         for location in IceBarLocation.allCases {
             let config = DisplayIceBarConfiguration.defaultConfiguration.withIceBarLocation(location)
             XCTAssertEqual(config.iceBarLocation, location)
+        }
+    }
+
+    // MARK: - All Layout Tests
+
+    func testAllIceBarLayouts() {
+        for layout in IceBarLayout.allCases {
+            let config = DisplayIceBarConfiguration.defaultConfiguration.withIceBarLayout(layout)
+            XCTAssertEqual(config.iceBarLayout, layout)
         }
     }
 }

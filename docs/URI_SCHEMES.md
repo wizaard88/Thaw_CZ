@@ -170,6 +170,8 @@ These settings affect specific displays based on context:
 | `useIceBar`              | Bool | Active display only | Enable/disable Thaw Bar on the display with the active menu bar |
 | `iceBarLocation`         | String | All displays with IceBar enabled | Thaw Bar position: `dynamic`, `mousePointer`, or `iceIcon` |
 | `alwaysShowHiddenItems`  | Bool | All displays without IceBar | Show hidden items inline when IceBar is disabled |
+| `iceBarLayout`           | String | All displays with IceBar enabled | Thaw Bar layout: `horizontal`, `vertical`, or `grid` |
+| `gridColumns`            | Int | All displays with IceBar enabled | Maximum items per row in grid layout (2–10) |
 
 **Per-Display Behavior:**
 
@@ -227,6 +229,12 @@ open "thaw://set?key=iceBarLocation&value=mousePointer"
 
 # Enable always-show-hidden-items (all displays without IceBar)
 open "thaw://set?key=alwaysShowHiddenItems&value=true"
+
+# Set Thaw Bar layout to grid (all displays with IceBar enabled)
+open "thaw://set?key=iceBarLayout&value=grid"
+
+# Set grid columns to 5 (all displays with IceBar enabled)
+open "thaw://set?key=gridColumns&value=5"
 
 # Set rehide interval to 10 seconds (clamped to range 1-300)
 open "thaw://set?key=rehideInterval&value=10"

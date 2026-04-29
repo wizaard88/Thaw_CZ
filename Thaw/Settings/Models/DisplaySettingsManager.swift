@@ -161,6 +161,29 @@ final class DisplaySettingsManager: ObservableObject {
                 }
             }
 
+        case "iceBarLayout":
+            if let rawValueString = notification.userInfo?["stringValue"] as? String,
+               let layout = IceBarLayout.fromString(rawValueString)
+            {
+                if let uuid = specificUUID {
+                    setIceBarLayout(layout, forDisplayUUID: uuid)
+                } else {
+                    setIceBarLayout(layout, scope: scope)
+                }
+            }
+
+        case "gridColumns":
+            if let rawValueString = notification.userInfo?["stringValue"] as? String,
+               let value = Int(rawValueString)
+            {
+                let clamped = Swift.max(2, Swift.min(value, 10))
+                if let uuid = specificUUID {
+                    setGridColumns(clamped, forDisplayUUID: uuid)
+                } else {
+                    setGridColumns(clamped, scope: scope)
+                }
+            }
+
         default:
             break
         }
@@ -229,6 +252,50 @@ final class DisplaySettingsManager: ObservableObject {
     private func setIceBarLocation(_ location: IceBarLocation, forDisplayUUID uuid: String) {
         updateConfiguration(forDisplayUUID: uuid) { config in
             config.withIceBarLocation(location)
+        }
+    }
+
+    /// Sets iceBarLayout for displays based on scope.
+    private func setIceBarLayout(_ layout: IceBarLayout, scope: SettingsURIHandler.PerDisplayScope) {
+        if scope == .allEnabledDisplays {
+            for screen in NSScreen.screens {
+                guard let uuid = Bridging.getDisplayUUIDString(for: screen.displayID) else { continue }
+                let config = configurations[uuid] ?? .defaultConfiguration
+                if config.useIceBar {
+                    updateConfiguration(forDisplayUUID: uuid) { $0.withIceBarLayout(layout) }
+                }
+            }
+        } else {
+            diagLog.debug("setIceBarLayout not implemented for scope \(scope)")
+        }
+    }
+
+    /// Sets iceBarLayout for a specific display UUID.
+    private func setIceBarLayout(_ layout: IceBarLayout, forDisplayUUID uuid: String) {
+        updateConfiguration(forDisplayUUID: uuid) { config in
+            config.withIceBarLayout(layout)
+        }
+    }
+
+    /// Sets gridColumns for displays based on scope.
+    private func setGridColumns(_ columns: Int, scope: SettingsURIHandler.PerDisplayScope) {
+        if scope == .allEnabledDisplays {
+            for screen in NSScreen.screens {
+                guard let uuid = Bridging.getDisplayUUIDString(for: screen.displayID) else { continue }
+                let config = configurations[uuid] ?? .defaultConfiguration
+                if config.useIceBar {
+                    updateConfiguration(forDisplayUUID: uuid) { $0.withGridColumns(columns) }
+                }
+            }
+        } else {
+            diagLog.debug("setGridColumns not implemented for scope \(scope)")
+        }
+    }
+
+    /// Sets gridColumns for a specific display UUID.
+    private func setGridColumns(_ columns: Int, forDisplayUUID uuid: String) {
+        updateConfiguration(forDisplayUUID: uuid) { config in
+            config.withGridColumns(columns)
         }
     }
 
@@ -305,6 +372,16 @@ final class DisplaySettingsManager: ObservableObject {
     /// The Thaw Bar location for the given display.
     func iceBarLocation(for displayID: CGDirectDisplayID) -> IceBarLocation {
         configuration(for: displayID).iceBarLocation
+    }
+
+    /// The Thaw Bar layout for the given display.
+    func iceBarLayout(for displayID: CGDirectDisplayID) -> IceBarLayout {
+        configuration(for: displayID).iceBarLayout
+    }
+
+    /// The grid column count for the given display.
+    func gridColumns(for displayID: CGDirectDisplayID) -> Int {
+        configuration(for: displayID).gridColumns
     }
 
     /// Whether hidden items should always be shown for the given display.
