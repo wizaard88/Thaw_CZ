@@ -20,7 +20,6 @@ final class MenuBarAppearanceConfigurationV2Tests: XCTestCase {
         XCTAssertEqual(config.leftMargin, 0)
         XCTAssertEqual(config.rightMargin, 0)
         XCTAssertFalse(config.isDynamic)
-        XCTAssertFalse(config.showsMenuBarBackground)
     }
 
     // MARK: - Has Rounded Shape Tests
@@ -48,7 +47,6 @@ final class MenuBarAppearanceConfigurationV2Tests: XCTestCase {
         XCTAssertEqual(decoded.leftMargin, original.leftMargin)
         XCTAssertEqual(decoded.rightMargin, original.rightMargin)
         XCTAssertEqual(decoded.isDynamic, original.isDynamic)
-        XCTAssertEqual(decoded.showsMenuBarBackground, original.showsMenuBarBackground)
     }
 
     func testDecodeWithMissingFields() throws {

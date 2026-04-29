@@ -31860,6 +31860,7 @@
     },
     "Show menu bar background" : {
       "comment" : "A toggle that lets the user enable or disable the display of the system menu bar background.",
+      "extractionState" : "stale",
       "localizations" : {
         "cs" : {
           "stringUnit" : {
@@ -32693,6 +32694,7 @@
     },
     "Shows the system's menu bar background. Enable this if you use a dynamic wallpaper or have 'Show menu bar background' disabled in System Settings." : {
       "comment" : "An annotation for the toggle that lets the user know how to enable the feature.",
+      "extractionState" : "stale",
       "localizations" : {
         "cs" : {
           "stringUnit" : {

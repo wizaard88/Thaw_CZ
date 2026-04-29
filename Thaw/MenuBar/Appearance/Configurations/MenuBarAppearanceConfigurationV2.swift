@@ -19,7 +19,6 @@ struct MenuBarAppearanceConfigurationV2: Hashable {
     var leftMargin: Double
     var rightMargin: Double
     var isDynamic: Bool
-    var showsMenuBarBackground: Bool
 
     var hasRoundedShape: Bool {
         switch shapeKind {
@@ -55,8 +54,7 @@ extension MenuBarAppearanceConfigurationV2 {
         isInset: true,
         leftMargin: 0,
         rightMargin: 0,
-        isDynamic: false,
-        showsMenuBarBackground: false
+        isDynamic: false
     )
 }
 
@@ -72,7 +70,6 @@ extension MenuBarAppearanceConfigurationV2: Codable {
         case leftMargin
         case rightMargin
         case isDynamic
-        case showsMenuBarBackground
     }
 
     init(from decoder: any Decoder) throws {
@@ -87,8 +84,7 @@ extension MenuBarAppearanceConfigurationV2: Codable {
             isInset: container.decodeIfPresent(Bool.self, forKey: .isInset) ?? Self.defaultConfiguration.isInset,
             leftMargin: container.decodeIfPresent(Double.self, forKey: .leftMargin) ?? Self.defaultConfiguration.leftMargin,
             rightMargin: container.decodeIfPresent(Double.self, forKey: .rightMargin) ?? Self.defaultConfiguration.rightMargin,
-            isDynamic: container.decodeIfPresent(Bool.self, forKey: .isDynamic) ?? Self.defaultConfiguration.isDynamic,
-            showsMenuBarBackground: container.decodeIfPresent(Bool.self, forKey: .showsMenuBarBackground) ?? Self.defaultConfiguration.showsMenuBarBackground
+            isDynamic: container.decodeIfPresent(Bool.self, forKey: .isDynamic) ?? Self.defaultConfiguration.isDynamic
         )
     }
 
@@ -104,7 +100,6 @@ extension MenuBarAppearanceConfigurationV2: Codable {
         try container.encode(leftMargin, forKey: .leftMargin)
         try container.encode(rightMargin, forKey: .rightMargin)
         try container.encode(isDynamic, forKey: .isDynamic)
-        try container.encode(showsMenuBarBackground, forKey: .showsMenuBarBackground)
     }
 }
 
