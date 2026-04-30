@@ -492,6 +492,20 @@ extension MenuBarItem {
     }
 }
 
+// MARK: - MenuBarItem Init
+
+extension MenuBarItem {
+    init(tag: MenuBarItemTag, windowID: CGWindowID, ownerPID: pid_t, sourcePID: pid_t?, bounds: CGRect, title: String?, isOnScreen: Bool) {
+        self.tag = tag
+        self.windowID = windowID
+        self.ownerPID = ownerPID
+        self.sourcePID = sourcePID
+        self.bounds = bounds
+        self.title = title
+        self.isOnScreen = isOnScreen
+    }
+}
+
 // MARK: MenuBarItem: Equatable
 
 extension MenuBarItem: Equatable {

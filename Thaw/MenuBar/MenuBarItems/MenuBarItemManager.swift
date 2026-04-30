@@ -983,6 +983,11 @@ extension MenuBarItemManager {
         /// of the previous cache.
         private(set) var cachedItemWindowIDs = [CGWindowID]()
 
+        /// A mapping from window identifiers to their resolved source process
+        /// identifiers from the previous cache cycle. Used to detect and correct
+        /// transient sourcePID resolution errors (e.g. stale AX data after moves).
+        private(set) var cachedItemPIDs = [CGWindowID: pid_t]()
+
         /// Runs the given async closure as a task and waits for it to
         /// complete before returning.
         ///
@@ -1000,9 +1005,15 @@ extension MenuBarItemManager {
             cachedItemWindowIDs = itemWindowIDs
         }
 
+        /// Updates the mapping from window identifiers to source process identifiers.
+        func updateCachedItemPIDs(_ pids: [CGWindowID: pid_t]) {
+            cachedItemPIDs = pids
+        }
+
         /// Clears the list of cached menu bar item window identifiers.
         func clearCachedItemWindowIDs() {
             cachedItemWindowIDs.removeAll()
+            cachedItemPIDs.removeAll()
         }
     }
 
@@ -1367,6 +1378,52 @@ extension MenuBarItemManager {
 
         MenuBarItemManager.diagLog.debug("cacheItemsRegardless: getMenuBarItems returned \(items.count) items")
 
+        // Reconcile resolved sourcePIDs against previously known values to
+        // prevent transient resolution errors (e.g. stale AX data after item
+        // moves) from corrupting item identities. SourcePIDCache does spatial
+        // matching between CG windows and AX extras menu bar children, which
+        // can produce wrong matches when AX positions lag behind CG updates.
+        // A cached PID from a previous stable cycle is more trustworthy.
+        if resolveSourcePID {
+            let previousPIDs = await cacheActor.cachedItemPIDs
+            for i in items.indices {
+                let item = items[i]
+                guard !item.isControlItem else { continue }
+                if let prevPID = previousPIDs[item.windowID],
+                   let currentPID = item.sourcePID,
+                   currentPID != prevPID
+                {
+                    MenuBarItemManager.diagLog.warning(
+                        "SourcePID changed for windowID \(item.windowID): \(prevPID) -> \(currentPID), reverting to previous PID"
+                    )
+                    // Rebuild the namespace from the previous PID. If the bundle
+                    // ID is not available (app no longer running), keep the
+                    // original tag namespace as a safe fallback.
+                    let prevBundleID = NSRunningApplication(processIdentifier: prevPID)?.bundleIdentifier
+                    let correctedNamespace: MenuBarItemTag.Namespace = if let prevBundleID {
+                        .string(prevBundleID)
+                    } else {
+                        item.tag.namespace
+                    }
+                    let correctedTag = MenuBarItemTag(
+                        namespace: correctedNamespace,
+                        title: item.tag.title,
+                        windowID: item.windowID,
+                        instanceIndex: item.tag.instanceIndex
+                    )
+                    items[i] = MenuBarItem(
+                        tag: correctedTag,
+                        windowID: item.windowID,
+                        ownerPID: item.ownerPID,
+                        sourcePID: prevPID,
+                        bounds: item.bounds,
+                        title: item.title,
+                        isOnScreen: item.isOnScreen
+                    )
+                }
+            }
+        }
+
         // When sourcePID resolution changes an item's identifier (e.g. from
         // com.apple.controlcenter:Item-0:4 to pl.maketheweb.cleanshotx:Item-0),
         // the new identifier won't be in knownItemIdentifiers. Seed it now so
@@ -1552,6 +1609,19 @@ extension MenuBarItemManager {
         isRestoringItemOrderTimestamp = nil
 
         await uncheckedCacheItems(items: items, controlItems: controlItems, displayID: displayID)
+
+        // Persist the resolved (possibly corrected) sourcePIDs for the next
+        // cache cycle so transient resolution errors can be detected.
+        // Only update when sourcePIDs were actually resolved — the settle-end
+        // fast restore (resolveSourcePID=false) must not overwrite the baseline.
+        if resolveSourcePID {
+            let newPIDs = Dictionary(
+                uniqueKeysWithValues: items.compactMap { item in
+                    item.sourcePID.map { (item.windowID, $0) }
+                }
+            )
+            await cacheActor.updateCachedItemPIDs(newPIDs)
+        }
 
         // Detect late-arriving items that belong to the active profile.
         if activeProfileLayout != nil,
