@@ -354,16 +354,14 @@ final class MenuBarItemManager: ObservableObject {
     /// persists it. Skips the write when the order has not changed.
     /// For items currently in the cache, uses their current section.
     /// For items from apps that are closed (not in cache), preserves their saved section.
-    /// Only tracks primary items (instanceIndex == 0); indexed items are skipped
-    /// as they naturally position themselves next to their primary item.
     private func saveSectionOrder(from cache: ItemCache) {
         var newOrder = [String: [String]]()
 
-        // Build a set of all identifiers currently in the cache (only primary items)
+        // Build a set of all identifiers currently in the cache.
         var allCurrentIdentifiers = Set<String>()
         var allCurrentBaseIdentifiers = Set<String>()
         for section in MenuBarSection.Name.allCases {
-            for item in cache[section] where !item.isControlItem && item.tag.instanceIndex == 0 && item.sourcePID != nil {
+            for item in cache[section] where !item.isControlItem && item.sourcePID != nil {
                 let uniqueID = item.uniqueIdentifier
                 allCurrentIdentifiers.insert(uniqueID)
                 // Also track base identifier (without instanceIndex) to handle
@@ -374,9 +372,9 @@ final class MenuBarItemManager: ObservableObject {
         }
 
         for section in MenuBarSection.Name.allCases {
-            // Start with current identifiers for this section (only primary items)
+            // Start with current identifiers for this section.
             var identifiers = cache[section]
-                .filter { !$0.isControlItem && $0.tag.instanceIndex == 0 && $0.sourcePID != nil }
+                .filter { !$0.isControlItem && $0.sourcePID != nil }
                 .map(\.uniqueIdentifier)
 
             // Add identifiers from saved sections that are NOT currently in the cache
@@ -4219,7 +4217,7 @@ extension MenuBarItemManager {
                 }
             }
             var context = CacheContext(controlItems: controlItems, displayID: Bridging.getActiveMenuBarDisplayID())
-            for item in items where !item.isControlItem && item.isMovable && item.canBeHidden && item.tag.instanceIndex == 0 {
+            for item in items where !item.isControlItem && item.isMovable && item.canBeHidden {
                 guard let currentSection = context.findSection(for: item) else { continue }
                 let baseIdentifier = "\(item.tag.namespace):\(item.tag.title)"
                 if let savedSection = savedSectionForBaseID[baseIdentifier], currentSection != savedSection {
@@ -4281,11 +4279,6 @@ extension MenuBarItemManager {
         for item in items where !item.isControlItem && item.isMovable && item.canBeHidden {
             let tagString = item.tag.tagIdentifier
             guard !activelyShownTags.contains(tagString) else { continue }
-
-            // Skip indexed items (instanceIndex > 0). These naturally position
-            // themselves next to each other, and restoring them causes shuffling.
-            // Only restore the primary item (instanceIndex == 0).
-            guard item.tag.instanceIndex == 0 else { continue }
 
             guard let currentSection = context.findSection(for: item) else { continue }
 
