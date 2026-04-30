@@ -181,9 +181,13 @@ final class GeneralSettings: ObservableObject {
         $itemSpacingOffset
             .removeDuplicates()
             .receive(on: DispatchQueue.main)
-            .sink { [weak appState] offset in
-                Defaults.set(offset, forKey: .itemSpacingOffset)
-                appState?.spacingManager.offset = Int(offset)
+            .sink { [weak appState, weak self] offset in
+                let clamped = max(-16, min(16, offset))
+                if clamped != offset {
+                    self?.diagLog.warning("itemSpacingOffset \(offset) clamped to \(clamped)")
+                }
+                Defaults.set(clamped, forKey: .itemSpacingOffset)
+                appState?.spacingManager.offset = Int(clamped.rounded())
             }
             .store(in: &c)
 

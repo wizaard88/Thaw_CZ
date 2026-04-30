@@ -7,8 +7,6 @@
 //  Licensed under the GNU GPLv3
 
 import Cocoa
-import Combine
-import os.lock
 
 /// Manager for menu bar item spacing.
 @MainActor
@@ -28,6 +26,9 @@ final class MenuBarItemSpacingManager {
         }
     }
 
+    /// An error thrown when an app fails to terminate after force-quitting.
+    private struct AppNotTerminatedError: Error {}
+
     /// An error that groups multiple failed app relaunches.
     private struct GroupedRelaunchError: LocalizedError {
         let failedApps: [String]
@@ -43,7 +44,7 @@ final class MenuBarItemSpacingManager {
     }
 
     /// Delay before force terminating an app.
-    private let forceTerminateDelay = 1
+    private let forceTerminateDelay = 5
 
     /// The offset to apply to the default spacing and padding.
     /// Does not take effect until ``applyOffset()`` is called.
@@ -58,20 +59,8 @@ final class MenuBarItemSpacingManager {
         process.executableURL = Constants.menuBarItemSpacingExecutableURL
         process.arguments = CollectionOfOne(command) + arguments
 
-        let task = Task.detached {
-            try process.run()
-            process.waitUntilExit()
-        }
-
-        return try await task.value
-    }
-
-    /// Removes the value for the specified key.
-    private func removeValue(forKey key: Key) async throws {
-        try await runCommand(
-            "defaults",
-            with: ["-currentHost", "delete", "-globalDomain", key.rawValue]
-        )
+        try process.run()
+        process.waitUntilExit()
     }
 
     /// Sets the value for the specified key to the key's default value plus the given offset.
@@ -92,57 +81,43 @@ final class MenuBarItemSpacingManager {
                 "Application \"\(app.logString)\" is already terminated"
             )
             return
-        } else {
-            MenuBarItemSpacingManager.diagLog.debug(
-                "Signaling application \"\(app.logString)\" to quit"
-            )
         }
+
+        MenuBarItemSpacingManager.diagLog.debug(
+            "Signaling application \"\(app.logString)\" to quit"
+        )
 
         app.terminate()
 
-        var cancellable: AnyCancellable?
-        let didResume = OSAllocatedUnfairLock(initialState: false)
-        return try await withCheckedThrowingContinuation { continuation in
-            let timeoutTask = Task {
-                try await Task.sleep(for: .seconds(forceTerminateDelay))
-                if !app.isTerminated {
-                    MenuBarItemSpacingManager.diagLog.debug(
-                        """
-                        Application \"\(app.logString)\" did not terminate within \
-                        \(self.forceTerminateDelay) seconds, attempting to force terminate
-                        """
-                    )
-                    app.forceTerminate()
+        let pollInterval: Duration = .milliseconds(50)
+        let deadline = ContinuousClock.now.advanced(by: .seconds(forceTerminateDelay))
 
-                    // Failsafe: if KVO doesn't fire after force terminate, resume anyway to prevent hang
-                    try? await Task.sleep(for: .seconds(1))
-                    cancellable?.cancel()
-                    if didResume.tryClaimOnce() {
-                        continuation.resume()
-                    }
-                }
-            }
-
-            cancellable = app.publisher(for: \.isTerminated).sink { isTerminated in
-                guard
-                    isTerminated
-                else {
-                    return
-                }
-                timeoutTask.cancel()
-                cancellable?.cancel()
-                MenuBarItemSpacingManager.diagLog.debug(
-                    "Application \"\(app.logString)\" terminated successfully"
-                )
-                if didResume.tryClaimOnce() {
-                    continuation.resume()
-                }
-            }
+        while !app.isTerminated, ContinuousClock.now < deadline {
+            try await Task.sleep(for: pollInterval)
         }
+
+        if !app.isTerminated {
+            MenuBarItemSpacingManager.diagLog.debug(
+                """
+                Application "\(app.logString)" did not terminate within \
+                \(forceTerminateDelay) seconds, attempting to force terminate
+                """
+            )
+            app.forceTerminate()
+            try? await Task.sleep(for: .seconds(1))
+        }
+
+        if !app.isTerminated {
+            throw AppNotTerminatedError()
+        }
+
+        MenuBarItemSpacingManager.diagLog.debug(
+            "Application \"\(app.logString)\" terminated successfully"
+        )
     }
 
     /// Asynchronously launches the app at the given URL.
-    private nonisolated func launchApp(
+    private func launchApp(
         at applicationURL: URL,
         bundleIdentifier: String
     ) async throws {
@@ -182,17 +157,19 @@ final class MenuBarItemSpacingManager {
         }
     }
 
+    /// Writes the current offset to the system defaults.
+    private func writeDefaults(for offset: Int) async throws {
+        try await setOffset(offset, forKey: .spacing)
+        try await setOffset(offset, forKey: .padding)
+    }
+
     /// Applies the current ``offset``.
     ///
     /// - Note: Calling this restarts all apps with a menu bar item.
     func applyOffset() async throws {
-        if offset == 0 {
-            try await removeValue(forKey: .spacing)
-            try await removeValue(forKey: .padding)
-        } else {
-            try await setOffset(offset, forKey: .spacing)
-            try await setOffset(offset, forKey: .padding)
-        }
+        let previousOffset = offset
+
+        try await writeDefaults(for: offset)
 
         try? await Task.sleep(for: .milliseconds(100))
 
@@ -205,7 +182,6 @@ final class MenuBarItemSpacingManager {
             for pid in pids {
                 guard
                     let app = NSRunningApplication(processIdentifier: pid),
-                    app.bundleIdentifier != "com.apple.controlcenter",
                     app != .current
                 else {
                     break
@@ -238,21 +214,9 @@ final class MenuBarItemSpacingManager {
             }
         }
 
-        try? await Task.sleep(for: .milliseconds(100))
-
-        if let app = NSRunningApplication.runningApplications(
-            withBundleIdentifier: "com.apple.controlcenter"
-        ).first {
-            do {
-                try await signalAppToQuit(app)
-            } catch {
-                if let name = app.localizedName {
-                    failedApps.append(name)
-                }
-            }
-        }
-
         if !failedApps.isEmpty {
+            offset = previousOffset
+            try? await writeDefaults(for: previousOffset)
             throw GroupedRelaunchError(failedApps: failedApps)
         }
     }

@@ -262,10 +262,7 @@ struct GeneralSettingsPane: View {
                     .disabled(isApplyingItemSpacingOffset || settings.itemSpacingOffset == 0)
                 }
             } label: {
-                HStack {
-                    Text("Menu bar item spacing")
-                    BetaBadge()
-                }
+                Text("Menu bar item spacing")
             }
         }
         .annotation(
@@ -280,6 +277,9 @@ struct GeneralSettingsPane: View {
         }
         .onAppear {
             tempItemSpacingOffset = settings.itemSpacingOffset
+        }
+        .onChange(of: settings.itemSpacingOffset) { _, newValue in
+            tempItemSpacingOffset = newValue
         }
     }
 
