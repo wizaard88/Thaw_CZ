@@ -955,6 +955,18 @@ final class MenuBarItemManager: ObservableObject {
             }
             .store(in: &c)
 
+        // Periodic check for new menu bar items that appeared after the
+        // launch notification follow-ups (e.g. background-only apps like
+        // OneDrive that register their NSStatusItem late). Lightweight
+        // windowID comparison bails fast when nothing changed.
+        cacheTickCancellable = Timer.publish(every: 60, on: .main, in: .common)
+            .autoconnect()
+            .sink { [weak self] _ in
+                Task { [weak self] in
+                    await self?.cacheItemsIfNeeded()
+                }
+            }
+
         cancellables = c
     }
 
