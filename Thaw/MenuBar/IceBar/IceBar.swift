@@ -172,6 +172,16 @@ final class IceBarPanel: NSPanel {
             return
         }
 
+        let menuBarHeight = screen.getMenuBarHeightEstimate()
+        diagLog.notice("""
+        show: screen=\(screen.displayID) \
+        backingScaleFactor=\(Double(screen.backingScaleFactor)) \
+        hasNotch=\(screen.hasNotch) \
+        menuBarHeight=\(Double(menuBarHeight)) \
+        frame=\(screen.frame.debugDescription) \
+        visibleFrame=\(screen.visibleFrame.debugDescription)
+        """)
+
         hotkeyLocationOverride = triggeredByHotkey && appState.settings.general.iceBarLocationOnHotkey
 
         // IMPORTANT: We must set the navigation state and current section
@@ -408,6 +418,20 @@ private struct IceBarContentView: View {
         .padding(5)
         .frame(maxWidth: screen.frame.width)
         .fixedSize(horizontal: true, vertical: layout == .horizontal)
+        .onAppear {
+            Self.diagLog.notice("""
+            IceBarContentView appeared: \
+            displayID=\(screen.displayID) \
+            backingScaleFactor=\(Double(screen.backingScaleFactor)) \
+            hasNotch=\(screen.hasNotch) \
+            contentHeight=\(Double(contentHeight)) \
+            itemMaxHeight=\(Double(itemMaxHeight ?? 0)) \
+            menuBarHeight=\(Double(screen.getMenuBarHeightEstimate())) \
+            layout=\(String(describing: layout)) \
+            items=\(items.count) \
+            section=\(section.logString)
+            """)
+        }
         .onFrameChange(update: $frame)
         .task(id: section) {
             cacheGracePeriodActive = true

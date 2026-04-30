@@ -548,7 +548,9 @@ final class MenuBarItemImageCache: ObservableObject, @unchecked Sendable {
             for section in sections {
                 let items = appState.itemManager.itemCache.managedItems(for: section)
                 guard !items.isEmpty else { continue }
-                await refreshImages(of: items, scale: screen.backingScaleFactor)
+                let scale = screen.backingScaleFactor
+                MenuBarItemImageCache.diagLog.debug("liveRefresh: section=\(section.logString) displayID=\(screen.displayID) backingScaleFactor=\(Double(scale)) hasNotch=\(screen.hasNotch) items=\(items.count) menuBarHeight=\(Double(screen.getMenuBarHeightEstimate()))")
+                await refreshImages(of: items, scale: scale)
             }
         }
 
@@ -1198,6 +1200,7 @@ final class MenuBarItemImageCache: ObservableObject, @unchecked Sendable {
         }
 
         let scale = screen.backingScaleFactor
+        MenuBarItemImageCache.diagLog.notice("updateCacheWithoutChecks: displayID=\(screen.displayID) backingScaleFactor=\(Double(scale)) hasNotch=\(screen.hasNotch) menuBarHeight=\(Double(screen.getMenuBarHeightEstimate())) sections=\(sections.map(\.logString))")
         var newImages = [MenuBarItemTag: CapturedImage]()
 
         for section in sections {

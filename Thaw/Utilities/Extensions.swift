@@ -597,6 +597,8 @@ extension NSImage {
 // MARK: - NSScreen
 
 extension NSScreen {
+    private static let diagLog = DiagLog(category: "NSScreen")
+
     /// The screen containing the mouse pointer.
     static var screenWithMouse: NSScreen? {
         screens.first { $0.frame.contains(NSEvent.mouseLocation) }
@@ -682,17 +684,25 @@ extension NSScreen {
     func getMenuBarHeight() -> CGFloat? {
         let id = displayID
         if let cached = NSScreen.displayCache.withLock({ $0.menuBarHeights[id] }) {
+            let result = cached > 0 ? cached : nil
+            Self.diagLog.debug("getMenuBarHeight: display=\(id) returnedCached=\(Double(cached)) result=\(result ?? -1)")
             // Negative sentinel means a previous lookup failed; don't retry
             // until the cache is invalidated.
-            return cached > 0 ? cached : nil
+            return result
         }
-        let menuBarWindow = WindowInfo.menuBarWindow(for: id)
-        guard let height = menuBarWindow?.bounds.height, height > 0 else {
-            // Cache the failure so the next call skips the IPC round-trip.
+        guard let menuBarWindow = WindowInfo.menuBarWindow(for: id) else {
             NSScreen.displayCache.withLock { $0.menuBarHeights[id] = -1 }
+            Self.diagLog.warning("getMenuBarHeight: display=\(id) no menu bar window found, cached sentinel -1")
+            return nil
+        }
+        let height = menuBarWindow.bounds.height
+        guard height > 0 else {
+            NSScreen.displayCache.withLock { $0.menuBarHeights[id] = -1 }
+            Self.diagLog.warning("getMenuBarHeight: display=\(id) menu bar window has zero height, cached sentinel -1")
             return nil
         }
         NSScreen.displayCache.withLock { $0.menuBarHeights[id] = height }
+        Self.diagLog.debug("getMenuBarHeight: display=\(id) liveHeight=\(Double(height)) windowID=\(menuBarWindow.windowID)")
         return height
     }
 
@@ -704,16 +714,34 @@ extension NSScreen {
     /// available.
     func getMenuBarHeightEstimate() -> CGFloat {
         if let live = getMenuBarHeight() {
-            return live
+            // Non-notched displays should never report > standard thickness.
+            // Prevents a spanning primary-display menu bar window (e.g. 37pt
+            // on a MacBook with notch) from incorrectly sizing the IceBar on
+            // a secondary display where the window's bounds happen to overlap.
+            let clamped = hasNotch ? live : min(live, NSStatusBar.system.thickness)
+            if clamped != live {
+                Self.diagLog.notice("getMenuBarHeightEstimate: display=\(displayID) CLAMPED live=\(Double(live)) -> \(Double(clamped)) (hasNotch=\(hasNotch))")
+            } else {
+                Self.diagLog.debug("getMenuBarHeightEstimate: display=\(displayID) live=\(Double(live))")
+            }
+            return clamped
         }
         // Skip the sentinel (-1) stored for a failed lookup.
         let id = displayID
         if let cached = NSScreen.displayCache.withLock({ $0.menuBarHeights[id] }), cached > 0 {
-            return cached
+            let clamped = hasNotch ? cached : min(cached, NSStatusBar.system.thickness)
+            if clamped != cached {
+                Self.diagLog.notice("getMenuBarHeightEstimate: display=\(id) CLAMPED cache=\(Double(cached)) -> \(Double(clamped)) (hasNotch=\(hasNotch))")
+            } else {
+                Self.diagLog.debug("getMenuBarHeightEstimate: display=\(id) cacheHit=\(Double(cached))")
+            }
+            return clamped
         }
         // Notched MacBooks have a ~37-38 pt menu bar; non-notch Macs use the
         // standard status-bar thickness (22 pt).
-        return hasNotch ? 37.0 : NSStatusBar.system.thickness
+        let fallback = hasNotch ? 37.0 : NSStatusBar.system.thickness
+        Self.diagLog.notice("getMenuBarHeightEstimate: display=\(id) FALLBACK hasNotch=\(hasNotch) fallback=\(Double(fallback))")
+        return fallback
     }
 
     /// Returns the raw frame of the application menu on this screen, as
