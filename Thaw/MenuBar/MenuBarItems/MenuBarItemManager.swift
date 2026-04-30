@@ -1371,8 +1371,10 @@ extension MenuBarItemManager {
         // com.apple.controlcenter:Item-0:4 to pl.maketheweb.cleanshotx:Item-0),
         // the new identifier won't be in knownItemIdentifiers. Seed it now so
         // the item isn't treated as a "new" item by relocateNewLeftmostItems.
+        // Skip items with unresolved sourcePID so the placeholder
+        // "com.apple.controlcenter" namespace never enters the persisted set.
         if !previousWindowIDs.isEmpty {
-            for item in items where previousWindowIDs.contains(item.windowID) {
+            for item in items where previousWindowIDs.contains(item.windowID) && item.sourcePID != nil {
                 let identifier = "\(item.tag.namespace):\(item.tag.title)"
                 if !knownItemIdentifiers.contains(identifier) {
                     knownItemIdentifiers.insert(identifier)
@@ -3684,8 +3686,10 @@ extension MenuBarItemManager {
         if suppressNextNewLeftmostItemRelocation {
             // Seed known identifiers so these baseline items won't be treated as "new"
             // on subsequent cache passes, then clear the suppression flag.
+            // Skip items with unresolved sourcePID so the placeholder
+            // "com.apple.controlcenter" namespace never enters the persisted set.
             let identifiers = items
-                .filter { !$0.isControlItem }
+                .filter { !$0.isControlItem && $0.sourcePID != nil }
                 .map { "\($0.tag.namespace):\($0.tag.title)" }
             knownItemIdentifiers.formUnion(identifiers)
             persistKnownItemIdentifiers()
@@ -3702,8 +3706,10 @@ extension MenuBarItemManager {
         // Seed identifiers and skip relocation; the settling-end restore pass
         // will handle correct placement.
         if isInStartupSettling {
+            // Skip items with unresolved sourcePID so the placeholder
+            // "com.apple.controlcenter" namespace never enters the persisted set.
             let identifiers = items
-                .filter { !$0.isControlItem }
+                .filter { !$0.isControlItem && $0.sourcePID != nil }
                 .map { "\($0.tag.namespace):\($0.tag.title)" }
             knownItemIdentifiers.formUnion(identifiers)
             persistKnownItemIdentifiers()
@@ -3802,6 +3808,22 @@ extension MenuBarItemManager {
         // tag/namespace) and not already placed/pinned in hidden areas.
         let hideableLeftmost = leftmostItems.filter(\.canBeHidden)
         let previousIDs = Set(previousWindowIDs)
+
+        // Skip when any hideable item has an unresolved sourcePID. Without
+        // sourcePID resolution, third-party items hosted by Control Center
+        // fall back to namespace "com.apple.controlcenter", which prevents
+        // matching against savedSectionOrder (real bundle IDs) and
+        // bundleIDsWithSavedHiddenItems. In that state, existing items can be
+        // misclassified as "new" and relocated. The next cache pass with
+        // resolved sourcePIDs will handle relocation safely. The Thaw-icon
+        // and non-hideable-system-item branches above use windowID-based
+        // logic and run before this guard so they remain unaffected.
+        if hideableLeftmost.contains(where: { $0.sourcePID == nil }) {
+            MenuBarItemManager.diagLog.debug(
+                "relocateNewLeftmostItems: skipping, hideable items have unresolved sourcePIDs"
+            )
+            return false
+        }
 
         // Build lookup for saved sections (same logic as restoreItemsToSavedSections).
         var savedSectionForIdentifier = [String: MenuBarSection.Name]()
