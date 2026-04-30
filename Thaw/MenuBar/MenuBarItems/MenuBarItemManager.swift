@@ -140,6 +140,9 @@ final class MenuBarItemManager: ObservableObject {
 
     /// Cached timeouts for click operations (adaptive per app).
     private var clickOperationTimeouts = [MenuBarItemTag: Duration]()
+    /// Serialization gate for cache operations.
+    private let cacheGate = CacheGate()
+
     /// Storage for internal observers.
     private var cancellables = Set<AnyCancellable>()
 
@@ -971,6 +974,31 @@ final class MenuBarItemManager: ObservableObject {
     }
 }
 
+// MARK: - Cache Gate
+
+extension MenuBarItemManager {
+    /// Serializes cache operations to prevent races between concurrent
+    /// `cacheItemsRegardless` calls. When a relocation move is in flight,
+    /// a concurrent call could snapshot item positions before the move
+    /// completes, caching them in the wrong section.
+    ///
+    /// Concurrent calls are dropped — the next trigger (space change,
+    /// periodic refresh, app launch notification) will pick up changes.
+    private actor CacheGate {
+        private var isInProgress = false
+
+        func begin() -> Bool {
+            guard !isInProgress else { return false }
+            isInProgress = true
+            return true
+        }
+
+        func end() {
+            isInProgress = false
+        }
+    }
+}
+
 // MARK: - Item Cache
 
 extension MenuBarItemManager {
@@ -1356,6 +1384,15 @@ extension MenuBarItemManager {
             return
         }
 
+        // Serialization gate: drop concurrent calls while a previous cache
+        // cycle is in flight. Without this, a call that starts during a
+        // relocation move by another call may snapshot pre-move positions.
+        guard await cacheGate.begin() else {
+            MenuBarItemManager.diagLog.debug("cacheItemsRegardless: serial cache operation already in progress, skipping")
+            return
+        }
+        defer { Task { await cacheGate.end() } }
+
         let previousWindowIDs = cacheActor.cachedItemWindowIDs
         let displayID = Bridging.getActiveMenuBarDisplayID()
         MenuBarItemManager.diagLog.debug("cacheItemsRegardless: displayID=\(displayID.map { "\($0)" } ?? "nil"), previousWindowIDs count=\(previousWindowIDs.count)")
@@ -1385,7 +1422,7 @@ extension MenuBarItemManager {
         // can produce wrong matches when AX positions lag behind CG updates.
         // A cached PID from a previous stable cycle is more trustworthy.
         if resolveSourcePID {
-            let previousPIDs = await cacheActor.cachedItemPIDs
+            let previousPIDs = cacheActor.cachedItemPIDs
             for i in items.indices {
                 let item = items[i]
                 guard !item.isControlItem else { continue }
@@ -1620,7 +1657,7 @@ extension MenuBarItemManager {
                     item.sourcePID.map { (item.windowID, $0) }
                 }
             )
-            await cacheActor.updateCachedItemPIDs(newPIDs)
+            cacheActor.updateCachedItemPIDs(newPIDs)
         }
 
         // Detect late-arriving items that belong to the active profile.
