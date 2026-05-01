@@ -157,14 +157,16 @@ private struct UnlabeledPartialEditor: View {
     @Binding var configuration: MenuBarAppearancePartialConfiguration
 
     var body: some View {
-        IceSection {
-            tintPicker
-            shadowToggle
-        }
-        IceSection {
-            borderToggle
-            borderColor
-            borderWidth
+        VStack(spacing: .iceFormDefaultSpacing) {
+            IceSection {
+                tintPicker
+                shadowToggle
+            }
+            IceSection {
+                borderToggle
+                borderColor
+                borderWidth
+            }
         }
     }
 
