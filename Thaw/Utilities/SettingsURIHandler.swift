@@ -815,6 +815,19 @@ enum SettingsURIHandler {
             } else {
                 return createErrorResponse(requestId: requestId, error: "Display UUID required", details: "Provide display=<uuid> when key=display")
             }
+        case "version":
+            let shortVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
+            let buildVersion = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "unknown"
+            return [
+                "requestId": requestId,
+                "status": "success",
+                "key": "version",
+                "data": [
+                    "value": shortVersion,
+                    "build": buildVersion,
+                    "type": "string",
+                ],
+            ]
         default:
             // Individual setting
             if let value = getSettingValue(key: key, displayUUID: displayUUID) {
@@ -956,10 +969,17 @@ enum SettingsURIHandler {
             displaysData[uuid] = getDisplayInfo(screen: screen, uuid: uuid)
         }
 
+        let shortVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
+        let buildVersion = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "unknown"
+
         return [
             "requestId": requestId,
             "status": "success",
             "data": [
+                "appVersion": [
+                    "value": shortVersion,
+                    "build": buildVersion,
+                ],
                 "global": globalSettings,
                 "displays": displaysData,
             ],

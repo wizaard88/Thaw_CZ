@@ -195,7 +195,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Handle settings manipulation URLs
         switch host {
-        case "set", "toggle", "get":
+        case "set", "toggle", "get", "authorize":
             handleSettingsURL(url, host: host, senderBundleId: senderBundleId)
             return
         default:
@@ -229,9 +229,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return
         }
 
+        // Handle version get request without auth (read-only metadata)
+        if host == "get",
+           let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+           components.queryItems?.first(where: { $0.name == "key" })?.value == "version"
+        {
+            handleGetURL(url, sender: nil)
+            return
+        }
+
         // Determine effective bundle ID (auto-detected or manual override)
         guard let effectiveBundleId = determineEffectiveBundleId(url: url, senderBundleId: senderBundleId) else {
             appState.diagLog.debug("Settings URI: Cannot determine sender bundle ID, ignoring: \(url.absoluteString)")
+            return
+        }
+
+        // Handle authorize request - triggers auth dialog if not already authorized
+        if host == "authorize" {
+            if !SettingsURIHandler.isWhitelisted(bundleIdentifier: effectiveBundleId) {
+                _ = SettingsURIHandler.promptForAuthorization(bundleId: effectiveBundleId)
+            }
             return
         }
 

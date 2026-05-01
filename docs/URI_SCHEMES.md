@@ -18,6 +18,7 @@ Thaw registers the `thaw://` URL scheme in `Info.plist` via `CFBundleURLTypes`. 
 | `thaw://toggle-thawbar`           | Toggle Thaw Bar       | Toggles the IceBar on the active display |
 | `thaw://toggle-application-menus` | Toggle App Menus      | Shows/hides application menus            |
 | `thaw://open-settings`            | Open Settings         | Opens the Thaw settings window           |
+| `thaw://authorize`                | Authorize App         | Triggers auth dialog to grant an app whitelist access to settings |
 
 ### Usage Examples
 
@@ -117,7 +118,7 @@ Thaw supports programmatic settings manipulation via the `thaw://` URL scheme wi
 
 1. **Feature Toggle**: Settings URI is disabled by default (enable in Settings → Automation)
 2. **Whitelist**: Only approved apps can modify settings
-3. **First-Time Authorization**: New apps trigger a confirmation dialog with app name and permissions
+3. **First-Time Authorization**: New apps trigger a confirmation dialog with app name and permissions. Apps can proactively request authorization via `thaw://authorize` without reading or writing settings
 4. **Silent Failures**: Unauthorized requests fail without user interruption
 
 ### Supported Settings Keys
@@ -265,6 +266,27 @@ open "thaw://toggle?key=useIceBar&display=XYZ789-..."
 
 **Note:** Display UUIDs can be found in System Settings → Displays, or via the `system_profiler SPDisplaysDataType` command. If the specified display is not connected, the request fails silently.
 
+### Authorizing an App
+
+External apps can proactively request authorization via `thaw://authorize`. This triggers the macOS permission dialog for the calling app without needing to read or write any settings.
+
+```bash
+# Request whitelist authorization for the calling app
+open "thaw://authorize"
+```
+
+**Behavior:**
+- If the app is already whitelisted → silent no-op
+- If the app is not whitelisted → shows the authorization dialog with app name, bundle ID, and signing info
+- After approval, the app is added to the whitelist and can use all settings URIs
+
+**Usage:**
+```bash
+# Request authorization before reading settings
+open "thaw://authorize"
+open "thaw://get?key=all&callback=myapp://response&requestId=1"
+```
+
 ### Getting Settings (Read Operations)
 
 Thaw supports reading settings via `thaw://get` URLs. You must provide a response mechanism: either a `callback` URL (recommended) or `broadcast=true` for acknowledgement notifications.
@@ -322,6 +344,46 @@ open "thaw://get?key=useIceBar&display=37D8832A-...&callback=droppy://thaw-respo
   "status": "success",
   "key": "autoRehide",
   "data": {"value": true, "type": "boolean"}
+}
+```
+
+#### Get App Version (No Auth Required)
+
+The app version is a read-only value accessible without whitelist authorization. No callback URL required — it works with `broadcast=true` as well.
+
+```bash
+# Get app version (no auth needed)
+open "thaw://get?key=version&callback=droppy://thaw-response&requestId=abc123"
+
+# Or via broadcast
+open "thaw://get?key=version&broadcast=true&requestId=abc123"
+```
+
+**Response JSON:**
+```json
+{
+  "requestId": "abc123",
+  "status": "success",
+  "key": "version",
+  "data": {
+    "value": "1.2.3",
+    "build": "42",
+    "type": "string"
+  }
+}
+```
+
+When included in `key=all`, version appears as:
+```json
+{
+  "data": {
+    "appVersion": {
+      "value": "1.2.3",
+      "build": "42"
+    },
+    "global": {},
+    "displays": {}
+  }
 }
 ```
 
