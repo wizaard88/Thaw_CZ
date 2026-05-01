@@ -181,6 +181,7 @@ struct AboutSettingsPane: View {
                 .buttonStyle(.plain)
             }
             .padding(.horizontal, 8)
+            .padding(.vertical, 6)
         }
     }
 }

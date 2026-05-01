@@ -37,6 +37,7 @@ struct AutomationSettingsPane: View {
                     securityNote
                 }
             }
+            .padding(8)
         }
     }
 
@@ -50,10 +51,10 @@ struct AutomationSettingsPane: View {
     // MARK: - Whitelist Section
 
     private var whitelistSection: some View {
-        IceSection(options: [.isBordered]) {
+        IceSection(spacing: .iceSectionDefaultSpacing, options: [.isBordered]) {
+            whitelistHeader
+        } content: {
             VStack(alignment: .leading, spacing: 16) {
-                whitelistHeader
-
                 if settings.whitelistedApps.isEmpty {
                     emptyWhitelistView
                 } else {
@@ -64,19 +65,27 @@ struct AutomationSettingsPane: View {
 
                 addAppSection
             }
+            .padding(8)
         }
     }
 
     private var whitelistHeader: some View {
-        HStack {
+        HStack(spacing: 0) {
             Text("Whitelisted Applications")
                 .font(.headline)
 
-            Spacer()
+            Spacer().frame(width: 6)
 
+            Text("(")
+                .font(.caption)
+                .foregroundStyle(.secondary)
             Text(String(localized: "apps \(settings.whitelistedApps.count)", comment: "Shows the number of whitelisted apps"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            Text(")")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Spacer()
         }
     }
 

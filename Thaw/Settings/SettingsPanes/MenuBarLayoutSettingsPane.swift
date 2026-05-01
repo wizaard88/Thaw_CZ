@@ -58,7 +58,6 @@ struct MenuBarLayoutSettingsPane: View {
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
             }
-            .padding(15)
         }
     }
 

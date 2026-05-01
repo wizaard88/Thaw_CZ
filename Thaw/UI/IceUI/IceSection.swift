@@ -110,7 +110,7 @@ struct IceSection<Header: View, Content: View, Footer: View>: View {
                 headerView
 
                 if isBordered {
-                    IceGroupBox {
+                    IceGroupBox(padding: EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12)) {
                         contentLayout
                     }
                     .background(
