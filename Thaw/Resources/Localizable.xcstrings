@@ -125,7 +125,7 @@
       "localizations" : {
         "cs" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "("
           }
         },
@@ -244,7 +244,7 @@
       "localizations" : {
         "cs" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : ")"
           }
         },
@@ -363,7 +363,7 @@
       "localizations" : {
         "cs" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%@"
           }
         },
@@ -482,7 +482,7 @@
       "localizations" : {
         "cs" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%1$@ (%2$@)"
           }
         },
@@ -2293,7 +2293,7 @@
       "localizations" : {
         "cs" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "%lld"
           }
         },
@@ -2902,7 +2902,7 @@
       "localizations" : {
         "cs" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "•"
           }
         },
@@ -3021,7 +3021,7 @@
       "localizations" : {
         "cs" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "+"
           }
         },
@@ -3140,7 +3140,7 @@
       "localizations" : {
         "cs" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "⌘"
           }
         },
@@ -3259,7 +3259,7 @@
       "localizations" : {
         "cs" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "⎋"
           }
         },
@@ -3378,7 +3378,7 @@
       "localizations" : {
         "cs" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "1"
           }
         },
@@ -3497,7 +3497,7 @@
       "localizations" : {
         "cs" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "1."
           }
         },
@@ -3616,7 +3616,7 @@
       "localizations" : {
         "cs" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "2"
           }
         },
@@ -3735,7 +3735,7 @@
       "localizations" : {
         "cs" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "2."
           }
         },
@@ -3854,7 +3854,7 @@
       "localizations" : {
         "cs" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "3"
           }
         },
@@ -3973,7 +3973,7 @@
       "localizations" : {
         "cs" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "3."
           }
         },
@@ -4092,7 +4092,7 @@
       "localizations" : {
         "cs" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "4."
           }
         },
@@ -4569,7 +4569,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Přístupnost"
+            "value" : "Zpřístupnění"
           }
         },
         "de" : {
@@ -7088,7 +7088,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Aplikace s přístupem k nastavení se zobrazí zde, když je schválíte."
+            "value" : "Aplikace s přístupem k nastavení se po schválení zobrazí zde."
           }
         },
         "de" : {
@@ -8515,7 +8515,7 @@
       "localizations" : {
         "cs" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "BETA"
           }
         },
@@ -15059,7 +15059,7 @@
       "localizations" : {
         "cs" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "E"
           }
         },
@@ -21492,7 +21492,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Obnovení rozložení. Položky byly přesunuty do sekce „Skryté“."
+            "value" : "Obnovení rozložení. Všechny ikony se skryly."
           }
         },
         "de" : {
@@ -24466,7 +24466,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Přesuňte odznáček „Nové položky“, abyste určili, kde se budou nově zjištěné ikony zobrazovat."
+            "value" : "Nově zjištěné ikony se budou zobrazovat tam, kam přesunete odznáček „Nové položky“."
           }
         },
         "de" : {
@@ -26369,7 +26369,7 @@
       "localizations" : {
         "cs" : {
           "stringUnit" : {
-            "state" : "new",
+            "state" : "translated",
             "value" : "OK"
           }
         },
@@ -31249,7 +31249,7 @@
         "cs" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Rolujte nebo přejeďte kurzorem po řádku nabídek, aby se zobrazily skryté položky."
+            "value" : "Rolujte nebo táhněte kurzorem po řádku nabídek, aby se zobrazily skryté položky."
           }
         },
         "de" : {
@@ -32319,8 +32319,8 @@
       "localizations" : {
         "cs" : {
           "stringUnit" : {
-            "state" : "new",
-            "value" : "Should %1$@ automatically check for updates? You can always check manually from the %2$@ menu bar icon or Settings %3$@ About."
+            "state" : "translated",
+            "value" : "Chcete, aby aplikace %1$@ automaticky kontrolovala aktualizace? Můžete je kdykoliv vyhledat ručně z ikony %2$@ v řádku nabídek nebo v Nastavení %3$@ O aplikaci."
           }
         },
         "de" : {
