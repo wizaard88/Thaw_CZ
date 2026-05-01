@@ -190,30 +190,31 @@ enum SettingsURIHandler {
         let appName = getAppName(for: bundleId) ?? bundleId
         let teamId = getTeamIdentifier(for: bundleId)
 
-        // Build informative text with signing status
-        var signingInfo = ""
-        if let teamId {
-            signingInfo = "\n\nSigned by: \(teamId)"
-        } else {
-            signingInfo = "\n\n⚠️ Warning: This app is not code-signed."
-        }
-
         let alert = NSAlert()
-        alert.messageText = String(localized: "Allow \"\(appName)\" to control Thaw settings?")
-        alert.informativeText = String(
+        alert.messageText = String(localized: "Allow \"\(appName)\" to control \(Constants.displayName) settings?")
+
+        let baseText = String(
             localized: """
-            "\(appName)" (\(bundleId)) wants to control Thaw settings via URL scheme.
+            If granted, this app will be able to:
 
-            If allowed, this app will be able to:
             • Read current settings and configurations
-            • Toggle and change boolean settings
-            • Modify numeric values (timers, delays, intervals)
-            • Change enum settings (rehide strategy, Thaw Bar location)
-            • Modify per-display configurations
+            • Turn features and options on or off
+            • Adjust timing values (delays, intervals, timers)
+            • Change how \(Constants.displayName) Bar behaves
+            • Customize settings for each display
 
-            This permission persists until manually removed in Settings > Automation.\(signingInfo)
+            This permission stays active until removed in \(Constants.displayName)'s Automation settings.
             """
         )
+
+        var fullText = baseText
+        if let teamId {
+            fullText += "\n\n" + String(localized: "Signed by: \(teamId)")
+        } else {
+            fullText += "\n\n" + String(localized: "Warning: This app is not code-signed.")
+        }
+
+        alert.informativeText = fullText
 
         alert.alertStyle = .warning
         alert.addButton(withTitle: String(localized: "Allow"))
