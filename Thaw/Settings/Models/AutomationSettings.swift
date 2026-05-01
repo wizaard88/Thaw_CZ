@@ -126,9 +126,4 @@ final class AutomationSettings: ObservableObject {
         let trimmed = bundleId.trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.contains(".") && !trimmed.contains(" ") && !trimmed.isEmpty
     }
-
-    /// Returns a user-friendly description of what the whitelisted app can do.
-    func permissionDescription(for _: String) -> String {
-        return String(localized: "Can toggle settings: auto-rehide, show on click/hover/scroll, Thaw Bar, and other boolean options.")
-    }
 }
