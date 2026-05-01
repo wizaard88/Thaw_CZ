@@ -83,6 +83,7 @@ struct SettingsView: View {
             }
         }
         .listStyle(.sidebar)
+        .navigationSplitViewColumnWidth(ideal: 180, max: 220)
     }
 
     @ViewBuilder
