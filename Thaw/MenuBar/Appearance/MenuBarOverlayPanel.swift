@@ -524,7 +524,12 @@ private final class MenuBarOverlayPanelContentView: NSView {
 
     /// The currently displayed configuration.
     private var configuration: MenuBarAppearancePartialConfiguration {
-        previewConfiguration ?? fullConfiguration.current
+        if let appState = overlayPanel?.appState,
+           let preview = appState.appearanceManager.previewConfiguration
+        {
+            return preview
+        }
+        return fullConfiguration.current
     }
 
     override func viewDidMoveToWindow() {

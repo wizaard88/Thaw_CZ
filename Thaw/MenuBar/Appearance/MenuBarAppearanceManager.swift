@@ -106,6 +106,27 @@ final class MenuBarAppearanceManager: ObservableObject {
             }
             .store(in: &c)
 
+        $previewConfiguration
+            .sink { [weak self] preview in
+                guard let self else { return }
+                if let preview {
+                    let needsPanels = preview.hasShadow
+                        || preview.hasBorder
+                        || configuration.shapeKind != .noShape
+                        || preview.tintKind != .noTint
+                    if overlayPanels.isEmpty, needsPanels {
+                        configureOverlayPanels(with: configuration, force: true)
+                    }
+                } else {
+                    if !needsOverlayPanels(for: configuration) {
+                        while let panel = overlayPanels.popFirst() {
+                            panel.close()
+                        }
+                    }
+                }
+            }
+            .store(in: &c)
+
         cancellables = c
     }
 
@@ -129,7 +150,10 @@ final class MenuBarAppearanceManager: ObservableObject {
     }
 
     /// Configures the manager's overlay panels, if required by the given configuration.
-    private func configureOverlayPanels(with configuration: MenuBarAppearanceConfigurationV2) {
+    private func configureOverlayPanels(
+        with configuration: MenuBarAppearanceConfigurationV2,
+        force: Bool = false
+    ) {
         // Close existing panels to prevent memory leaks and duplicate windows
         while let panel = overlayPanels.popFirst() {
             panel.close()
@@ -137,7 +161,7 @@ final class MenuBarAppearanceManager: ObservableObject {
 
         guard
             let appState,
-            needsOverlayPanels(for: configuration)
+            force || needsOverlayPanels(for: configuration)
         else {
             return
         }
