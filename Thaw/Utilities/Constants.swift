@@ -77,4 +77,8 @@ enum Constants {
         }
         return url
     }
+
+    /// The arrow character used in menu path descriptions (→).
+    /// Extracted so translators see %@ instead of a unicode arrow.
+    static let menuArrow = "\u{2192}"
 }

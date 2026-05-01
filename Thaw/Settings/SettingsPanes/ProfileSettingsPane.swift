@@ -225,25 +225,22 @@ struct ProfileSettingsPane: View {
     }
 
     private var focusFilterFooter: some View {
-        HStack(alignment: .center, spacing: 4) {
-            Image(systemName: "info.circle")
-                .foregroundStyle(.secondary)
-                .font(.callout)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("To switch profiles with Focus modes, add Thaw as a Focus Filter in System Settings \u{2192} Focus \u{2192} [Mode] \u{2192} Focus Filters.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
-                Text("When a Focus mode deactivates, the display profile is automatically restored.")
-                    .font(.callout)
-                    .foregroundStyle(.secondary)
+        VStack(spacing: 8) {
+            CalloutBox(systemImage: "info.circle", font: .callout) {
+                Text("To switch profiles with Focus modes, add Thaw as a Focus Filter in System Settings \(Constants.menuArrow) Focus \(Constants.menuArrow) [Mode] \(Constants.menuArrow) Focus Filters. When a Focus mode deactivates, the display profile is automatically restored.")
             }
-            Spacer()
-            Button("Open Focus Settings") {
-                if let url = URL(string: "x-apple.systempreferences:com.apple.Focus") {
-                    NSWorkspace.shared.open(url)
+            .padding(.top, 22)
+            .padding(.leading, -8)
+
+            HStack {
+                Spacer()
+                Button("Open Focus Settings") {
+                    if let url = URL(string: "x-apple.systempreferences:com.apple.Focus") {
+                        NSWorkspace.shared.open(url)
+                    }
                 }
+                .buttonStyle(.bordered)
             }
-            .buttonStyle(.bordered)
         }
     }
 
@@ -269,11 +266,13 @@ struct ProfileSettingsPane: View {
                 }
             )
 
-            IcePicker(LocalizedStringKey(display.name), selection: binding) {
+            IcePicker(selection: binding) {
                 Text("None").tag("")
                 ForEach(profileOptions) { profile in
                     Text(profile.name).tag(profile.id.uuidString)
                 }
+            } label: {
+                display.localizedLabel
             }
         }
     }
@@ -329,7 +328,7 @@ struct ProfileSettingsPane: View {
             }
         }
         if failed > 0 {
-            errorMessage = "Failed to update configuration on \(failed) profile(s)."
+            errorMessage = String(localized: "Failed to update configuration on \(failed) profile(s).")
             showingError = true
         }
     }
@@ -351,7 +350,7 @@ struct ProfileSettingsPane: View {
 
     private func duplicateProfile(id: UUID) {
         let profile = profileManager.profiles.first { $0.id == id }
-        let name = (profile?.name ?? "Profile") + " Copy"
+        let name = (profile?.name ?? String(localized: "Profile")) + String(localized: " Copy")
         do {
             try profileManager.duplicateProfile(id: id, newName: name)
         } catch {
@@ -391,7 +390,7 @@ struct ProfileSettingsPane: View {
 
     private func exportAllProfiles() {
         guard let json = profileManager.exportAllProfiles() else {
-            errorMessage = "Failed to encode profiles for export."
+            errorMessage = String(localized: "Failed to encode profiles for export.")
             showingError = true
             return
         }
@@ -430,6 +429,12 @@ struct ProfileSettingsPane: View {
         let id: String
         let name: String
         let isConnected: Bool
+
+        var localizedLabel: Text {
+            if isConnected { Text(name) } else {
+                Text("\(name) (\(String(localized: "disconnected")))")
+            }
+        }
     }
 
     /// Returns all displays relevant to auto-switch: connected displays plus
@@ -450,7 +455,7 @@ struct ProfileSettingsPane: View {
             let cachedName = profile.associatedDisplayName ?? uuid
             displays.append(DisplayInfo(
                 id: uuid,
-                name: "\(cachedName) (disconnected)",
+                name: cachedName,
                 isConnected: false
             ))
         }
