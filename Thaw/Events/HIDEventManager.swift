@@ -320,6 +320,13 @@ final class HIDEventManager: ObservableObject {
         {
             alwaysHiddenSection.show()
             guardMouseUpState = .swallowingThenDisarm
+        } else if event.flags.contains(.maskAlternate),
+                  appState.settings.advanced.useOptionClickToShowAlwaysHiddenSection,
+                  let alwaysHiddenSection = appState.menuBarManager.section(withName: .alwaysHidden),
+                  alwaysHiddenSection.isEnabled
+        {
+            alwaysHiddenSection.toggle()
+            guardMouseUpState = .swallowingThenDisarm
         } else {
             guardMouseUpState = .swallowing
         }
