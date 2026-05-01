@@ -714,28 +714,14 @@ extension NSScreen {
     /// available.
     func getMenuBarHeightEstimate() -> CGFloat {
         if let live = getMenuBarHeight() {
-            // Non-notched displays should never report > standard thickness.
-            // Prevents a spanning primary-display menu bar window (e.g. 37pt
-            // on a MacBook with notch) from incorrectly sizing the IceBar on
-            // a secondary display where the window's bounds happen to overlap.
-            let clamped = hasNotch ? live : min(live, NSStatusBar.system.thickness)
-            if clamped != live {
-                Self.diagLog.notice("getMenuBarHeightEstimate: display=\(displayID) CLAMPED live=\(Double(live)) -> \(Double(clamped)) (hasNotch=\(hasNotch))")
-            } else {
-                Self.diagLog.debug("getMenuBarHeightEstimate: display=\(displayID) live=\(Double(live))")
-            }
-            return clamped
+            Self.diagLog.debug("getMenuBarHeightEstimate: display=\(displayID) live=\(Double(live))")
+            return live
         }
         // Skip the sentinel (-1) stored for a failed lookup.
         let id = displayID
         if let cached = NSScreen.displayCache.withLock({ $0.menuBarHeights[id] }), cached > 0 {
-            let clamped = hasNotch ? cached : min(cached, NSStatusBar.system.thickness)
-            if clamped != cached {
-                Self.diagLog.notice("getMenuBarHeightEstimate: display=\(id) CLAMPED cache=\(Double(cached)) -> \(Double(clamped)) (hasNotch=\(hasNotch))")
-            } else {
-                Self.diagLog.debug("getMenuBarHeightEstimate: display=\(id) cacheHit=\(Double(cached))")
-            }
-            return clamped
+            Self.diagLog.debug("getMenuBarHeightEstimate: display=\(id) cacheHit=\(Double(cached))")
+            return cached
         }
         // Notched MacBooks have a ~37-38 pt menu bar; non-notch Macs use the
         // standard status-bar thickness (22 pt).
